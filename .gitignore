@@ -1,0 +1,7 @@
+# .NET
+bin/
+obj/
+
+# JS
+node_modules/
+dist/

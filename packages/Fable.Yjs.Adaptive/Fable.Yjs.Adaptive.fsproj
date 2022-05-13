@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <!-- <Description>Fable binding for date-fns, implemented as extension methods for DateTime and DateTimeOffset</Description>
+      <PackageProjectUrl>https://github.com/Zaid-Ajaj/Fable.DateFunctions/</PackageProjectUrl>
+      <RepositoryUrl>https://github.com/Zaid-Ajaj/Fable.DateFunctions.git</RepositoryUrl>
+      <PackageLicenseUrl>https://github.com/Zaid-Ajaj/Fable.DateFunctions/blob/master/LICENSE</PackageLicenseUrl>
+      <PackageIconUrl></PackageIconUrl>
+      <PackageTags>fsharp;fable;date;dates;datetime;date-fns</PackageTags>
+      <Authors>Zaid Ajaj</Authors>
+      <Version>3.9.0</Version>
+      <GenerateDocumentationFile>true</GenerateDocumentationFile> -->
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+  <PropertyGroup>
+    <!-- <NpmDependencies>
+        <NpmPackage Name="yjs" Version="gte 13.5.35 lt 14" ResolutionStrategy="Max" />
+      </NpmDependencies> -->
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Fable.Yjs/Fable.Yjs.fsproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Observable.fs" />
+    <Compile Include="Yjs.Adaptive.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="*.fsproj; *.fs; *.js" Exclude="**\*.fs.js" PackagePath="fable\" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="FSharp.Data.Adaptive" Version="1.2.13" />
+  </ItemGroup>
+</Project>

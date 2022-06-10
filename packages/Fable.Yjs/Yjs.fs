@@ -812,23 +812,23 @@ module Types =
             /// <param name="attributes">Optionally define some formatting
             /// information to apply on the inserted
             /// Text.</param>
-            abstract insert: index: float * text: string * ?attributes: Object -> unit
+            abstract insert: index: int * text: string * ?attributes: Object -> unit
             /// <summary>Inserts an embed at a index.</summary>
             /// <param name="index">The index to insert the embed at.</param>
             /// <param name="embed">The Object that represents the embed.</param>
             /// <param name="attributes">Attribute information to apply on the
             /// embed</param>
-            abstract insertEmbed: index: float * embed: U2<Object, AbstractType<obj option>> * ?attributes: TextAttributes -> unit
+            abstract insertEmbed: index: int * embed: U2<Object, AbstractType<obj option>> * ?attributes: TextAttributes -> unit
             /// <summary>Deletes text starting from an index.</summary>
             /// <param name="index">Index at which to start deleting.</param>
             /// <param name="length">The number of characters to remove. Defaults to 1.</param>
-            abstract delete: index: float * length: float -> unit
+            abstract delete: index: int * length: int -> unit
             /// <summary>Assigns properties to a range of text.</summary>
             /// <param name="index">The position where to start formatting.</param>
             /// <param name="length">The amount of characters to assign properties to.</param>
             /// <param name="attributes">Attribute information to apply on the
             /// text.</param>
-            abstract format: index: float * length: float * attributes: TextAttributes -> unit
+            abstract format: index: int * length: int * attributes: TextAttributes -> unit
             /// <summary>Removes an attribute.</summary>
             /// <param name="attributeName">The attribute name that is to be removed.</param>
             abstract removeAttribute: attributeName: string -> unit
@@ -843,7 +843,9 @@ module Types =
             /// Returns all attribute name/value pairs in a JSON Object.
             abstract getAttributes: ?snapshot: Snapshot -> YTextGetAttributesReturn
             /// Number of characters of this text type.
-            abstract length: float with get
+            abstract length: int with get
+
+            abstract toString: unit -> string
             
 
         type [<AllowNullLiteral>] YTextGetAttributesReturn =
@@ -1137,7 +1139,7 @@ module Types =
             ///         used if DomBinding wants to create a
             ///         association to the created DOM type.</param>
             abstract toDOM: ?_document: Document * ?hooks: YXmlTextToDOM * ?binding: obj -> Text
-            abstract toString: unit -> obj option
+            abstract toString: unit -> string option
 
         /// Represents text in a Dom Element. In the future this type will also handle
         /// simple formatting information like bold and italic.
@@ -1976,8 +1978,8 @@ module Utils =
             /// The transaction that triggered this event.
             abstract transaction: Transaction with get, set
             abstract changes: Object option with get
-            abstract keys: Map<string, YEvent_keysMap> option with get
-            abstract delta: ResizeArray<YEvent_delta> option with get
+            abstract keys: Map<string, KeysMap> option with get
+            abstract delta: ResizeArray<Delta> with get
     //        obj
             /// Check if a struct is deleted by this event.
             /// 
@@ -1995,27 +1997,41 @@ module Utils =
             /// <param name="target">The changed type.</param>
             [<Emit "new $0($1...)">] abstract Create: target: 'T * transaction: Transaction -> YEvent<'T>
 
-        type [<StringEnum>] [<RequireQualifiedAccess>] YEvent_keysMapAction =
+        type [<StringEnum>] [<RequireQualifiedAccess>] KeysMapAction =
             | Add
             | Update
             | Delete
 
-        type [<AllowNullLiteral>] YEvent_keysMap =
-            abstract action: YEvent_keysMapAction with get, set
+        type [<AllowNullLiteral>] KeysMap =
+            abstract action: KeysMapAction with get, set
             abstract oldValue: obj option with get, set
             abstract newValue: obj option with get, set
 
-        type [<AllowNullLiteral>] YEvent_deltaAttributes =
+        type [<AllowNullLiteral>] DeltaAttributes =
             [<Emit "$0[$1]{{=$2}}">] abstract Item: x: string -> obj option with get, set
 
-        type [<AllowNullLiteral>] YEvent_delta =
+        type [<AllowNullLiteral>] Delta =
             abstract insert: U4<string, obj, ResizeArray<obj option>, AbstractType<obj option>> option with get, set
-            abstract retain: float option with get, set
-            abstract delete: float option with get, set
-            abstract attributes: YEvent_deltaAttributes option with get, set
+            abstract retain: int option with get, set
+            abstract delete: int option with get, set
+            abstract attributes: DeltaAttributes option with get, set
 
 module Y =
     type Text = Types.YText.YText
+    type TextEvent = Types.YText.YTextEvent
+    type Transaction = Utils.Transaction.Transaction
+    
+    module Event =
+        type Event<'a> = Utils.YEvent.YEvent<'a>
+        type Delta = Utils.YEvent.Delta
+        module Delta =
+            let (|Insert|Retain|Delete|) (delta : Delta) =
+                match delta.insert, delta.retain, delta.delete with
+                | Some insert, None, None -> Insert insert
+                | None, Some retain, None -> Retain retain
+                | None, None, Some delete -> Delete delete
+                | _, _, _ -> invalidOp $"Invalid delta event. ({delta})"
+
     
 // Exported members
 type Y () =

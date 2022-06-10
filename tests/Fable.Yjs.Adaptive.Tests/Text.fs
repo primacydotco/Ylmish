@@ -8,6 +8,7 @@ open FSharp.Data.Adaptive
 open Fable.Mocha
 
 let tests =
+    // Test cases from https://docs.yjs.dev/api/delta-format
     testList "Text tests" [
         test "ytext to cval" {
             let ydoc = Y.Doc.Create ()
@@ -15,8 +16,11 @@ let tests =
 
             let cval' = Y.Text.toAdaptive ytext
 
-            ytext.insert (0, "cat")
+            ytext.insert (0, "abcdefghij")
+            ytext.delete (1, 4)
 
-            Expect.equal (AVal.force cval') "cat" "equal"
+
+            Expect.equal (System.String.Concat cval') "afghij" "equal"
+            // Expect.equal (ytext.toString()) (System.String.Concat cval') "equal"
         }
     ]

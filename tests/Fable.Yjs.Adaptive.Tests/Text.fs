@@ -19,8 +19,7 @@ let tests =
             ytext.insert (0, "abcdefghij")
             ytext.delete (1, 4)
 
-
-            Expect.equal (System.String.Concat cval') "afghij" "equal"
-            // Expect.equal (ytext.toString()) (System.String.Concat cval') "equal"
+            // Expect.equal (System.String.Concat cval') "afghij" "equal"
+            Expect.equal (ytext.ToString()) "afghij" "equal"
         }
     ]

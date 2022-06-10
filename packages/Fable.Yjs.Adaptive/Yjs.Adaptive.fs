@@ -35,6 +35,8 @@ open Fable.Core
 // A different kind of wrapping
 // https://github.com/krauthaufen/Fable.Elmish.Adaptive/blob/master/src/Fable.React.Adaptive/AdaptiveHelpers.fs
 open Fable.Core.JS
+open Fable.Core.JsInterop
+
 type Sentinel () =
     static member val Singleton = Sentinel ()
 
@@ -91,7 +93,10 @@ module Y =
                     then ()
                     else
                         let _, ops = e.delta |> Seq.fold folder (Index.zero, IndexListDelta.empty)
-                        transact (fun () -> text'.Perform ops)
+                        transact (fun () ->
+                            Transaction.Current.Value?sentinel <- Sentinel.Singleton
+                            text'.Perform ops
+                        )
 
                 text.observe f
                 {
@@ -101,6 +106,7 @@ module Y =
 
             // Should there be an 'addmarkingcallback' for this?
             let d2 = text'.AddCallback(fun list delta ->
+                console.log("lets see", Transaction.Current) // callback doesn't occur within tx? tx.current is undefined.
                 Y.transact(Option.get text.doc, (fun tx -> (
                     ignore <| tx.meta.set (Some Sentinel.Singleton, Some ())
                     for (i, op) in delta do

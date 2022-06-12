@@ -40,63 +40,67 @@ open Fable.Core.JsInterop
 type Sentinel () =
     static member val Singleton = Sentinel ()
 
+module Index =
+
+    let private generator (count : int) (f : int -> Index -> 'T) (i : int, j : Index) : ('T * (int * Index)) option =
+        if i > count then None else
+        Some (f i j, (i + 1, Index.after j))
+
+    let generate f start count =
+        List.unfold (generator count f) (0, start)
+
+    let increment start i =
+        generate (fun _ i -> i) start i 
+        |> List.tryLast
+        |> Option.defaultValue start
+
+    let at = increment Index.zero
+
+module Delta =
+    let generate f start count =
+        let indexes = Index.generate f start count
+        let ops' = IndexListDelta.ofList indexes
+        let index' =
+            indexes
+            |> List.tryLast
+            |> Option.map fst
+            |> Option.defaultValue start
+        index', ops'
+
 module Y =
+    module TextEvent =
+        let toAdaptive (delta : Y.Event.Delta ResizeArray) =
+            let folder ((index, ops) : Index * IndexListDelta<char>) = function
+            | Y.Event.Delta.Retain ret ->
+                let index' = Index.increment index ret
+                index', ops
+            | Y.Event.Delta.Delete del ->
+                let index', ops' = Delta.generate (fun _ j -> j, ElementOperation<char>.Remove) index (del - 1)
+                index', IndexListDelta.combine ops ops'
+            | Y.Event.Delta.Insert (U4.Case1 ins) ->
+                let index', ops' = Delta.generate (fun i j -> j, ElementOperation<char>.Set (ins[i])) index (ins.Length - 1)
+                index', IndexListDelta.combine ops ops'
+            
+            delta 
+            |> Seq.fold folder (Index.zero, IndexListDelta.empty)
+            |> snd
+
     module Text =
         let toAdaptive (text : Y.Text) : char clist =
             let text' : char clist = text.toString () :> _ seq |> clist
             // TODO something with these disposables
             // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakRef
-
+            let mutable sentinel = false
             let d1 =
                 // https://docs.yjs.dev/api/delta-format
                 let f (e : Y.TextEvent) (tx : Y.Transaction) =
-                    let folder ((index, ops) : Index * IndexListDelta<char> ) = function
-                        | Y.Event.Delta.Retain ret ->
-                            Fable.Core.JS.console.log ("yjs retain ", ret)
-                            let index' =
-                                [ 0..ret ]
-                                |> List.skip 1
-                                |> List.fold (fun s _ -> Index.after s) index
-                            index', ops
-                        | Y.Event.Delta.Delete del ->
-                            Fable.Core.JS.console.log ("yjs delete ", del)
-                            let indexes =
-                                [ 0..del ]
-                                |> List.scan (fun s x -> Index.after s) index
-                                |> List.skip 2 // skip '0' and initial state returned by scan
-                            let ops' =
-                                indexes
-                                |> List.map (fun i -> i, ElementOperation<char>.Remove)
-                                |> IndexListDelta.ofList
-                            let index' =
-                                indexes
-                                |> List.tryLast
-                                |> Option.defaultValue index
-                            Fable.Core.JS.console.log ("yjs built ops ", $"%A{IndexListDelta.toList ops'}")
-                            index', IndexListDelta.combine ops ops'
-                        | Y.Event.Delta.Insert (U4.Case1 ins) ->
-                            let indexes =
-                                [ 0..ins.Length ]
-                                |> List.scan (fun s x -> Index.after s) index
-                                |> List.skip 2
-                            let ops' =
-                                indexes
-                                |> List.mapi (fun charIndex opIndex -> opIndex, ElementOperation<char>.Set (ins[charIndex]))
-                                |> IndexListDelta.ofList
-                            let index' =
-                                indexes
-                                |> List.tryLast
-                                |> Option.defaultValue index
-                            index', IndexListDelta.combine ops ops'
-
-                    if tx.meta.has (Some Sentinel.Singleton)
-                    then ()
+                    if sentinel then
+                        sentinel <- false
+                        () 
                     else
-                        let _, ops = e.delta |> Seq.fold folder (Index.zero, IndexListDelta.empty)
-                        transact (fun () ->
-                            Transaction.Current.Value?sentinel <- Sentinel.Singleton
-                            text'.Perform ops
-                        )
+                    sentinel <- true
+                    let ops = TextEvent.toAdaptive e.delta
+                    transact (fun () -> text'.Perform ops)
 
                 text.observe f
                 {
@@ -106,13 +110,17 @@ module Y =
 
             // Should there be an 'addmarkingcallback' for this?
             let d2 = text'.AddCallback(fun list delta ->
-                console.log("lets see", Transaction.Current) // callback doesn't occur within tx? tx.current is undefined.
+                if sentinel then
+                    sentinel <- false
+                else
+                sentinel <- true
                 Y.transact(Option.get text.doc, (fun tx -> (
                     ignore <| tx.meta.set (Some Sentinel.Singleton, Some ())
                     for (i, op) in delta do
                         let position = list |> IndexList.tryGetPosition i
                         match position, op with
                         | Some i, ElementOperation.Set ins ->
+                            Fable.Core.JS.console.log ("adaptive insert at ", i)
                             text.insert (i, string ins)
                         | Some i, ElementOperation.Remove ->
                             Fable.Core.JS.console.log ("adaptive delete at ", i)

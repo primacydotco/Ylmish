@@ -748,6 +748,7 @@ module Types =
     module YText =
         type Item = Structs.Item.Item
         type YEvent<'T> = Utils.YEvent.YEvent<'T>
+        type Delta = Utils.YEvent.Delta
         type AbstractType<'EventType> = Types.AbstractType.AbstractType<'EventType>
         type Transaction = Utils.Transaction.Transaction
         type ArraySearchMarker = Types.AbstractType.ArraySearchMarker
@@ -803,7 +804,7 @@ module Types =
             abstract toJSON: unit -> string
             /// <summary>Apply a {@link Delta} on this shared YText type.</summary>
             /// <param name="delta">The changes to apply on this element.</param>
-            abstract applyDelta: delta: obj option * ?p1: YTextApplyDelta -> unit
+            abstract applyDelta: delta: ResizeArray<Delta> * ?p1: YTextApplyDelta -> unit
             /// Returns the Delta representation of this YText type.
             abstract toDelta: ?snapshot: Snapshot * ?prevSnapshot: Snapshot * ?computeYChange: (YTextToDelta -> ID -> obj option) -> obj option
             /// <summary>Insert text at a given index.</summary>

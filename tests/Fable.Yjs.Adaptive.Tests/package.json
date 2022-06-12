@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "test+watch": "dotnet fable watch . -o build --run mocha build/Program.js --watch --parallel",
-    "test": "dotnet fable . -o build --run mocha dist/Program.js"
+    "test": "dotnet fable . -o build --run mocha build/Program.js",
+    "idk": "mocha build/Program.js"
   },
   "keywords": [],
   "author": "",

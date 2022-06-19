@@ -2023,6 +2023,7 @@ module Y =
     type Transaction = Utils.Transaction.Transaction
     
     module Event =
+        open JsInterop
         type Event<'a> = Utils.YEvent.YEvent<'a>
         type Delta = Utils.YEvent.Delta
         module Delta =
@@ -2032,6 +2033,10 @@ module Y =
                 | None, Some retain, None -> Retain retain
                 | None, None, Some delete -> Delete delete
                 | _, _, _ -> invalidOp $"Invalid delta event. ({delta})"
+
+            let Insert ins = jsOptions<Delta> (fun o -> o.insert <- Some ins)
+            let Delete del = jsOptions<Delta> (fun o -> o.delete <- Some del)
+            let Retain ret = jsOptions<Delta> (fun o -> o.retain <- Some ret)
 
     
 // Exported members

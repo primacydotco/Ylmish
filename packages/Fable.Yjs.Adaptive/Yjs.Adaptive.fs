@@ -85,6 +85,42 @@ module Y =
             |> Seq.fold folder (Index.zero, IndexListDelta.empty)
             |> snd
 
+        let ofAdaptive getPos (delta : IndexListDelta<_>) : ResizeArray<Y.Event.Delta> =
+            let (|Delta|) (op : ElementOperation<_>) =
+                match op with
+                | ElementOperation.Set c -> Y.Event.Delta.Insert (!^ $"{c}")
+                | ElementOperation.Remove -> Y.Event.Delta.Delete 1
+
+            let folder getPos (state : (Index * int * Y.Event.Delta) list) (index : Index, op : ElementOperation<char>) =
+                match state, op with
+                | [], Delta delta
+                    when index = Index.zero ->
+                    (index, 0, delta) :: []
+                | [], Delta delta ->
+                    let pos = getPos index
+                    (index, pos, delta) :: (index, pos, Y.Event.Delta.Retain pos) :: []
+                | (prevIndex, prevPos, Y.Event.Delta.Insert (U4.Case1 ins)) :: rest, ElementOperation.Set c
+                    when index = Index.after prevIndex ->
+                    (index, prevPos + 1, Y.Event.Delta.Insert (!^ $"{ins}{c}")) :: rest
+                | (prevIndex, prevPos, Y.Event.Delta.Delete (del)) :: rest, ElementOperation.Remove
+                    when index = Index.after prevIndex ->
+                    (index, prevPos + 1, Y.Event.Delta.Delete (del + 1)) :: rest
+                | (prevIndex, prevPos, prevDelta) :: rest, Delta delta
+                    when index = Index.after prevIndex ->
+                    (index, prevPos + 1, delta) :: (prevIndex, prevPos, prevDelta) :: rest
+                | (prevIndex, prevPos, prevDelta) :: rest, Delta delta ->
+                    let pos = getPos index
+                    let ret = pos - prevPos - 1
+                    (index, pos, delta) :: (index, pos, Y.Event.Delta.Retain ret) :: (prevIndex, prevPos, prevDelta) :: rest
+
+
+            delta
+            |> IndexListDelta.toList
+            |> List.fold (folder getPos) []
+            |> List.map (fun (_,_,x) -> x)
+            |> List.rev
+            |> ResizeArray
+
     module Text =
         let toAdaptive (text : Y.Text) : char clist =
             let text' : char clist = text.toString () :> _ seq |> clist
@@ -99,8 +135,8 @@ module Y =
                         () 
                     else
                     sentinel <- true
-                    let ops = TextEvent.toAdaptive e.delta
-                    transact (fun () -> text'.Perform ops)
+                    let delta' = TextEvent.toAdaptive e.delta
+                    transact (fun () -> text'.Perform delta')
 
                 text.observe f
                 {
@@ -114,19 +150,21 @@ module Y =
                     sentinel <- false
                 else
                 sentinel <- true
-                Y.transact(Option.get text.doc, (fun tx -> (
-                    ignore <| tx.meta.set (Some Sentinel.Singleton, Some ())
-                    for (i, op) in delta do
-                        let position = list |> IndexList.tryGetPosition i
-                        match position, op with
-                        | Some i, ElementOperation.Set ins ->
-                            Fable.Core.JS.console.log ("adaptive insert at ", i)
-                            text.insert (i, string ins)
-                        | Some i, ElementOperation.Remove ->
-                            Fable.Core.JS.console.log ("adaptive delete at ", i)
-                            text.delete (i, 1)
-                        | None _, _ -> ()
-                )))
+                let delta' = TextEvent.ofAdaptive (fun i -> list.TryGetPosition i |> Option.get) delta
+                text.applyDelta delta'
+                // Y.transact(Option.get text.doc, (fun tx -> (
+                //     ignore <| tx.meta.set (Some Sentinel.Singleton, Some ())
+                //     for (i, op) in delta do
+                //         let position = list |> IndexList.tryGetPosition i
+                //         match position, op with
+                //         | Some i, ElementOperation.Set ins ->
+                //             Fable.Core.JS.console.log ("adaptive insert at ", i)
+                //             text.insert (i, string ins)
+                //         | Some i, ElementOperation.Remove ->
+                //             Fable.Core.JS.console.log ("adaptive delete at ", i)
+                //             text.delete (i, 1)
+                //         | None _, _ -> ()
+                // )))
             )
 
             text'

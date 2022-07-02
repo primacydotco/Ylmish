@@ -1,0 +1,23 @@
+<Project>
+  <PropertyGroup>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <RestoreLockedMode>true</RestoreLockedMode>
+    <DisableImplicitNuGetFallbackFolder>true</DisableImplicitNuGetFallbackFolder>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <DisableImplicitFSharpCoreReference Condition="('$(MSBuildProjectExtension)' == '.fsproj')">true</DisableImplicitFSharpCoreReference>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- Treat the following compiler warnings as errors:
+      "FS0020: The result of this expression has type 'typename' and is implicitly ignored. Consider using 'ignore' to discard this value explicitly"
+      "FS0025: Incomplete pattern matches on this expression."
+      "FS0193: This expression is a function value, i.e. is missing arguments"
+      "FS1182: The value is unused"
+      "FS3222: This expression returns a value of type 'typename' but is implicitly discarded. Consider using 'let' to bind the result to a name"
+    -->
+    <WarnOn>1182</WarnOn>
+    <WarnAsError>20,25,193,1182,3222</WarnAsError>
+    <OtherFlags>$(OtherFlags) --warnon:$(WarnOn) --warnaserror+:$(WarnAsError)</OtherFlags>
+  </PropertyGroup>
+
+</Project>

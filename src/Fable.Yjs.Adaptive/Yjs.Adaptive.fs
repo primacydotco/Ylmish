@@ -56,29 +56,28 @@ module Index =
 
     let at = increment Index.zero
 
-module Delta =
-    let generate f start count =
-        let indexes = Index.generate f start count
-        let ops' = IndexListDelta.ofList indexes
-        let index' =
-            indexes
-            |> List.tryLast
-            |> Option.map fst
-            |> Option.defaultValue start
-        index', ops'
-
 module Y =
-    module TextEvent =
+    module Delta =
         let toAdaptive (delta : Y.Event.Delta ResizeArray) =
+            let generate f start count =
+                let indexes = Index.generate f start count
+                let ops' = IndexListDelta.ofList indexes
+                let index' =
+                    indexes
+                    |> List.tryLast
+                    |> Option.map fst
+                    |> Option.defaultValue start
+                index', ops'
+
             let folder ((index, ops) : Index * IndexListDelta<char>) = function
             | Y.Event.Delta.Retain ret ->
                 let index' = Index.increment index ret
                 index', ops
             | Y.Event.Delta.Delete del ->
-                let index', ops' = Delta.generate (fun _ j -> j, ElementOperation<char>.Remove) index (del - 1)
+                let index', ops' = generate (fun _ j -> j, ElementOperation<char>.Remove) index (del - 1)
                 index', IndexListDelta.combine ops ops'
             | Y.Event.Delta.Insert (U4.Case1 ins) ->
-                let index', ops' = Delta.generate (fun i j -> j, ElementOperation<char>.Set (ins[i])) index (ins.Length - 1)
+                let index', ops' = generate (fun i j -> j, ElementOperation<char>.Set (ins[i])) index (ins.Length - 1)
                 index', IndexListDelta.combine ops ops'
             
             delta 
@@ -144,7 +143,6 @@ module Y =
                         member _.Dispose () = text.unobserve f
                 }
 
-            // Should there be an 'addmarkingcallback' for this?
             let d2 = text'.AddCallback(fun list delta ->
                 if sentinel then
                     sentinel <- false
@@ -152,19 +150,6 @@ module Y =
                 sentinel <- true
                 let delta' = TextEvent.ofAdaptive (fun i -> list.TryGetPosition i |> Option.get) delta
                 text.applyDelta delta'
-                // Y.transact(Option.get text.doc, (fun tx -> (
-                //     ignore <| tx.meta.set (Some Sentinel.Singleton, Some ())
-                //     for (i, op) in delta do
-                //         let position = list |> IndexList.tryGetPosition i
-                //         match position, op with
-                //         | Some i, ElementOperation.Set ins ->
-                //             Fable.Core.JS.console.log ("adaptive insert at ", i)
-                //             text.insert (i, string ins)
-                //         | Some i, ElementOperation.Remove ->
-                //             Fable.Core.JS.console.log ("adaptive delete at ", i)
-                //             text.delete (i, 1)
-                //         | None _, _ -> ()
-                // )))
             )
 
             text'

@@ -1,0 +1,19 @@
+{
+  "name": "fable-yjs",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "install": "dotnet restore",
+    "test+watch": "dotnet fable watch tests/Fable.Yjs.Adaptive.Tests -o build/tests/Fable.Yjs.Adaptive.Tests --run mocha build/tests/Fable.Yjs.Adaptive.Tests/Program.js --watch --parallel"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "mocha": "8.3.2"
+  },
+  "dependencies": {
+    "yjs": "13.5.35"
+  }
+}

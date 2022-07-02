@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+      <TargetFramework>netstandard2.0</TargetFramework>
+    </PropertyGroup>
+    <PropertyGroup>
+      <NpmDependencies>
+        <NpmPackage Name="yjs" Version="gte 13.5.35 lt 14" ResolutionStrategy="Max" />
+      </NpmDependencies>
+    </PropertyGroup>
+    <ItemGroup>
+      <Compile Include="Lib0.fs" />
+      <Compile Include="Yjs.fs" />
+    </ItemGroup>
+    <ItemGroup>
+      <Content Include="*.fsproj; *.fs; *.js" Exclude="**\*.fs.js" PackagePath="fable\" />
+    </ItemGroup>
+    <ItemGroup>
+      <PackageReference Include="Fable.Browser.Dom" />
+      <PackageReference Include="Fable.Core" />
+      
+      <PackageReference Include="FSharp.Core" />
+    </ItemGroup>
+  </Project>

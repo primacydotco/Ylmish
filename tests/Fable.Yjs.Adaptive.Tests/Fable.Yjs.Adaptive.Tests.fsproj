@@ -3,13 +3,16 @@
         <TargetFramework>netstandard2.0</TargetFramework>
     </PropertyGroup>
     <ItemGroup>
-        <Compile Include="Text.fs" />
+        <Compile Include="Index.fs" />
+        <Compile Include="Y.Delta.fs" />
         <Compile Include="Program.fs" />
     </ItemGroup>
     <ItemGroup>
-        <ProjectReference Include="../../packages/Fable.Yjs.Adaptive/Fable.Yjs.Adaptive.fsproj" />
+        <ProjectReference Include="../../src/Fable.Yjs.Adaptive/Fable.Yjs.Adaptive.fsproj" />
     </ItemGroup>
     <ItemGroup>
-      <PackageReference Include="Fable.Mocha" Version="2.15.0" />
+      <PackageReference Include="Fable.Mocha" />
+
+      <PackageReference Include="FSharp.Core" />
     </ItemGroup>
 </Project>

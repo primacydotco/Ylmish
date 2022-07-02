@@ -1,9 +1,10 @@
-module Program
+module Yjs.Adaptive.Program
 
 open Fable.Mocha
 
 [<EntryPoint>]
-let main args =
+let main _ =
     Mocha.runTests <| testList "" [
-        Text.tests
+        Index.tests
+        Y.Delta.tests
     ]

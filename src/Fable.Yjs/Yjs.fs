@@ -1,5 +1,7 @@
-// ts2fable 0.7.1
 module rec Yjs
+
+#nowarn "1182"
+
 open System
 open Fable.Core
 open Fable.Core.JS
@@ -498,7 +500,7 @@ module Types =
         type Transaction = Utils.Transaction.Transaction
         type Doc = Utils.Doc.Doc
         type EventHandler<'ARG0, 'ARG1> = Utils.EventHandler.EventHandler<'ARG0, 'ARG1>
-        type YEvent<'T> = Utils.YEvent.YEvent<'T>
+        type YEvent<'T, 'E> = Utils.YEvent.YEvent<'T, 'E>
         type UpdateEncoderV1 = Utils.UpdateEncoder.UpdateEncoderV1
         type UpdateEncoderV2 = Utils.UpdateEncoder.UpdateEncoderV2
         type Snapshot = Utils.Snapshot.Snapshot
@@ -550,7 +552,7 @@ module Types =
             /// Event handlers
             abstract _eH: EventHandler<'EventType, Transaction> with get, set
             /// Deep event handlers
-            abstract _dEH: EventHandler<Array<YEvent<obj option>>, Transaction> with get, set
+            abstract _dEH: EventHandler<Array<YEvent<obj option, obj>>, Transaction> with get, set
             abstract _searchMarker: Array<ArraySearchMarker> option with get, set
     //        obj
             /// <summary>Integrate this type into the Yjs instance.
@@ -573,13 +575,13 @@ module Types =
             abstract observe: f: ('EventType -> Transaction -> unit) -> unit
             /// <summary>Observe all events that are created by this type and its children.</summary>
             /// <param name="f">Observer function</param>
-            abstract observeDeep: f: (Array<YEvent<obj option>> -> Transaction -> unit) -> unit
+            abstract observeDeep: f: (Array<YEvent<obj option, obj>> -> Transaction -> unit) -> unit
             /// <summary>Unregister an observer function.</summary>
             /// <param name="f">Observer function</param>
             abstract unobserve: f: ('EventType -> Transaction -> unit) -> unit
             /// <summary>Unregister an observer function.</summary>
             /// <param name="f">Observer function</param>
-            abstract unobserveDeep: f: (Array<YEvent<obj option>> -> Transaction -> unit) -> unit
+            abstract unobserveDeep: f: (Array<YEvent<obj option, obj>> -> Transaction -> unit) -> unit
             abstract toJSON: unit -> obj option
 
         type [<AllowNullLiteral>] AbstractTypeStatic =
@@ -589,7 +591,7 @@ module Types =
             [<Emit "$0[$1]{{=$2}}">] abstract Item: x: string -> obj option with get, set
 
     module YArray =
-        type YEvent<'T> = Utils.YEvent.YEvent<'T>
+        type YEvent<'T, 'E> = Utils.YEvent.YEvent<'T, 'E>
         type Transaction = Utils.Transaction.Transaction
         type AbstractType<'EventType> = Types.AbstractType.AbstractType<'EventType>
         type ArraySearchMarker = Types.AbstractType.ArraySearchMarker
@@ -605,7 +607,7 @@ module Types =
 
         /// Event that describes the changes on a YArray
         type [<AllowNullLiteral>] YArrayEvent<'T> =
-            inherit YEvent<YArray<'T>>
+            inherit YEvent<YArray<'T>, Array<'T>>
             abstract _transaction: Transaction with get, set
 
         /// Event that describes the changes on a YArray
@@ -672,7 +674,7 @@ module Types =
             abstract from: items: ResizeArray<'T_1> -> YArray<'T_1>
 
     module YMap =
-        type YEvent<'T> = Utils.YEvent.YEvent<'T>
+        type YEvent<'T, 'E> = Utils.YEvent.YEvent<'T, 'E>
         type Transaction = Utils.Transaction.Transaction
         type AbstractType<'EventType> = Types.AbstractType.AbstractType<'EventType>
         type Doc = Utils.Doc.Doc
@@ -686,7 +688,7 @@ module Types =
             abstract readYMap: decoder: U2<UpdateDecoderV1, UpdateDecoderV2> -> YMap<obj option>
 
         type [<AllowNullLiteral>] YMapEvent<'T> =
-            inherit YEvent<YMap<'T>>
+            inherit YEvent<YMap<'T>, obj>
             abstract keysChanged: Set<obj option> with get, set
 
         type [<AllowNullLiteral>] YMapEventStatic =
@@ -747,8 +749,8 @@ module Types =
 
     module YText =
         type Item = Structs.Item.Item
-        type YEvent<'T> = Utils.YEvent.YEvent<'T>
-        type Delta = Utils.YEvent.Delta
+        type YEvent<'T, 'E> = Utils.YEvent.YEvent<'T, 'E>
+        type Delta<'insert> = Utils.YEvent.Delta<'insert>
         type AbstractType<'EventType> = Types.AbstractType.AbstractType<'EventType>
         type Transaction = Utils.Transaction.Transaction
         type ArraySearchMarker = Types.AbstractType.ArraySearchMarker
@@ -777,7 +779,7 @@ module Types =
             [<Emit "new $0($1...)">] abstract Create: left: Item option * right: Item option * index: float * currentAttributes: Map<string, obj option> -> ItemTextListPosition
 
         type [<AllowNullLiteral>] YTextEvent =
-            inherit YEvent<YText>
+            inherit YEvent<YText, string>
             /// Set of all changed attributes.
             abstract keysChanged: Set<string> with get, set
     //        obj
@@ -804,7 +806,7 @@ module Types =
             abstract toJSON: unit -> string
             /// <summary>Apply a {@link Delta} on this shared YText type.</summary>
             /// <param name="delta">The changes to apply on this element.</param>
-            abstract applyDelta: delta: ResizeArray<Delta> * ?p1: YTextApplyDelta -> unit
+            abstract applyDelta: delta: ResizeArray<Delta<string>> * ?p1: YTextApplyDelta -> unit
             /// Returns the Delta representation of this YText type.
             abstract toDelta: ?snapshot: Snapshot * ?prevSnapshot: Snapshot * ?computeYChange: (YTextToDelta -> ID -> obj option) -> obj option
             /// <summary>Insert text at a given index.</summary>
@@ -928,14 +930,14 @@ module Types =
         type YXmlFragment = Types.YXmlFragment.YXmlFragment
         type YXmlElement = Types.YXmlElement.YXmlElement
         type YXmlText = Types.YXmlText.YXmlText
-        type YEvent<'T> = Utils.YEvent.YEvent<'T>
+        type YEvent<'T, 'E> = Utils.YEvent.YEvent<'T, 'E>
         type Transaction = Utils.Transaction.Transaction
 
         type [<AllowNullLiteral>] IExports =
             abstract YXmlEvent: YXmlEventStatic
 
         type [<AllowNullLiteral>] YXmlEvent =
-            inherit YEvent<U3<YXmlFragment, YXmlElement, YXmlText>>
+            inherit YEvent<U3<YXmlFragment, YXmlElement, YXmlText>, obj>
             /// Set of all changed attributes.
             abstract attributesChanged: Set<string> with get, set
 
@@ -1221,7 +1223,7 @@ module Utils =
         type Observable<'T> = System.IObservable<'T>
         type Item = Structs.Item.Item
         type AbstractType<'EventType> = Types.AbstractType.AbstractType<'EventType>
-        type YEvent<'T> = Utils.YEvent.YEvent<'T>
+        type YEvent<'T, 'E> = Utils.YEvent.YEvent<'T, 'E>
         type StructStore = Utils.StructStore.StructStore
         type Transaction = Utils.Transaction.Transaction
         type YArray<'T> = Types.YArray.YArray<'T>
@@ -1241,7 +1243,7 @@ module Utils =
             abstract clientID: float with get, set
             abstract guid: string with get, set
             abstract collectionid: string option with get, set
-            abstract share: Map<string, AbstractType<YEvent<obj option>>> with get, set
+            abstract share: Map<string, AbstractType<YEvent<obj option, obj>>> with get, set
             abstract store: StructStore with get, set
             abstract _transaction: Transaction option with get, set
             abstract _transactionCleanups: Array<Transaction> with get, set
@@ -1569,7 +1571,7 @@ module Utils =
         type Doc = Utils.Doc.Doc
         type DeleteSet = Utils.DeleteSet.DeleteSet
         type AbstractType<'EventType> = Types.AbstractType.AbstractType<'EventType>
-        type YEvent<'T> = Utils.YEvent.YEvent<'T>
+        type YEvent<'T, 'E> = Utils.YEvent.YEvent<'T, 'E>
         type AbstractStruct = Structs.AbstractStruct.AbstractStruct
         type UpdateEncoderV1 = Utils.UpdateEncoder.UpdateEncoderV1
         type UpdateEncoderV2 = Utils.UpdateEncoder.UpdateEncoderV2
@@ -1580,7 +1582,7 @@ module Utils =
             abstract Transaction: TransactionStatic
             abstract writeUpdateMessageFromTransaction: encoder: U2<UpdateEncoderV1, UpdateEncoderV2> * transaction: Transaction -> bool
             abstract nextID: transaction: Transaction -> obj
-            abstract addChangedTypeToTransaction: transaction: Transaction * ``type``: AbstractType<YEvent<obj option>> * parentSub: string option -> unit
+            abstract addChangedTypeToTransaction: transaction: Transaction * ``type``: AbstractType<YEvent<obj option, obj>> * parentSub: string option -> unit
             abstract tryGc: ds: DeleteSet * store: StructStore * gcFilter: (Item -> bool) -> unit
             abstract transact: doc: Doc * f: (Transaction -> unit) * ?origin: obj * ?local: bool -> unit
 
@@ -1601,10 +1603,10 @@ module Utils =
             /// All types that were directly modified (property added or child
             /// inserted/deleted). New types are not included in this Set.
             /// Maps from type to parentSubs (`item.parentSub = null` for YArray)
-            abstract changed: Map<AbstractType<YEvent<obj option>>, Set<string option>> with get, set
+            abstract changed: Map<AbstractType<YEvent<obj option, obj>>, Set<string option>> with get, set
             /// Stores the events for the types that observe also child elements.
             /// It is mainly used by `observeDeep`.
-            abstract changedParentTypes: Map<AbstractType<YEvent<obj option>>, Array<YEvent<obj option>>> with get, set
+            abstract changedParentTypes: Map<AbstractType<YEvent<obj option, obj>>, Array<YEvent<obj option, obj>>> with get, set
             abstract _mergeStructs: Array<AbstractStruct> with get, set
             abstract origin: obj option with get, set
             /// Stores meta information on the transaction
@@ -1971,7 +1973,7 @@ module Utils =
         type [<AllowNullLiteral>] IExports =
             abstract YEvent: YEventStatic
 
-        type [<AllowNullLiteral>] YEvent<'T> =
+        type [<AllowNullLiteral>] YEvent<'T, 'E> =
             /// The type on which this event was created on.
             abstract target: 'T with get, set
             /// The current target on which the observe callback is called.
@@ -1980,7 +1982,7 @@ module Utils =
             abstract transaction: Transaction with get, set
             abstract changes: Object option with get
             abstract keys: Map<string, KeysMap> option with get
-            abstract delta: ResizeArray<Delta> with get
+            abstract delta: ResizeArray<Delta<'E>> with get
     //        obj
             /// Check if a struct is deleted by this event.
             /// 
@@ -1996,7 +1998,7 @@ module Utils =
 
         type [<AllowNullLiteral>] YEventStatic =
             /// <param name="target">The changed type.</param>
-            [<Emit "new $0($1...)">] abstract Create: target: 'T * transaction: Transaction -> YEvent<'T>
+            [<Emit "new $0($1...)">] abstract Create: target: 'T * transaction: Transaction -> YEvent<'T, _>
 
         type [<StringEnum>] [<RequireQualifiedAccess>] KeysMapAction =
             | Add
@@ -2011,32 +2013,34 @@ module Utils =
         type [<AllowNullLiteral>] DeltaAttributes =
             [<Emit "$0[$1]{{=$2}}">] abstract Item: x: string -> obj option with get, set
 
-        type [<AllowNullLiteral>] Delta =
-            abstract insert: U4<string, obj, ResizeArray<obj option>, AbstractType<obj option>> option with get, set
+        type [<AllowNullLiteral>] Delta<'insert> =
+            abstract insert: 'insert option with get, set
             abstract retain: int option with get, set
             abstract delete: int option with get, set
             abstract attributes: DeltaAttributes option with get, set
 
 module Y =
     type Text = Types.YText.YText
-    type TextEvent = Types.YText.YTextEvent
     type Transaction = Utils.Transaction.Transaction
     
-    module Event =
+    type Delta<'insert> = Utils.YEvent.Delta<'insert>
+    
+    module Delta =
         open JsInterop
-        type Event<'a> = Utils.YEvent.YEvent<'a>
-        type Delta = Utils.YEvent.Delta
-        module Delta =
-            let (|Insert|Retain|Delete|) (delta : Delta) =
-                match delta.insert, delta.retain, delta.delete with
-                | Some insert, None, None -> Insert insert
-                | None, Some retain, None -> Retain retain
-                | None, None, Some delete -> Delete delete
-                | _, _, _ -> invalidOp $"Invalid delta event. ({delta})"
+        let (|Insert|Retain|Delete|) (delta : Delta<_>) =
+            match delta.insert, delta.retain, delta.delete with
+            | Some insert, None, None -> Insert insert
+            | None, Some retain, None -> Retain retain
+            | None, None, Some delete -> Delete delete
+            | _, _, _ -> invalidOp $"Invalid delta event. ({delta})"
 
-            let Insert ins = jsOptions<Delta> (fun o -> o.insert <- Some ins)
-            let Delete del = jsOptions<Delta> (fun o -> o.delete <- Some del)
-            let Retain ret = jsOptions<Delta> (fun o -> o.retain <- Some ret)
+        let Insert ins = jsOptions<Delta<_>> (fun o -> o.insert <- Some ins)
+        let Delete del = jsOptions<Delta<_>> (fun o -> o.delete <- Some del)
+        let Retain ret = jsOptions<Delta<_>> (fun o -> o.retain <- Some ret)
+
+    module Text =
+        type Event = Types.YText.YTextEvent
+
 
     
 // Exported members

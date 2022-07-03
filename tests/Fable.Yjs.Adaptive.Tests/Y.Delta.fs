@@ -9,42 +9,43 @@ open Yjs
 
 open Yjs.Adaptive
 
-let private toIndexListDelta =
-    List.map (fun (i, o) -> Index.at i, o)
-    >> IndexListDelta.ofList
-
-let private toIndexPositionLookup ls i =
-    ls 
-    |> List.map (fun (i, _) -> Index.at i, i)
-    |> List.find (fun (x, _) -> x = i)
-    |> snd
+let private toIndexListDelta list =
+    let delta = 
+        list
+        |> List.map (fun (i, o) -> Index.at i, o)
+        |> IndexListDelta.ofList
+    let placeholders =
+        if list.IsEmpty
+        then IndexList.empty 
+        else 
+            list
+            |> List.maxBy (fun (i, _) -> i)
+            |> fst
+            |> List.unfold (fun i ->
+                if i < 0 then None else Some (('_'), i - 1))
+            |> IndexList.ofList
+    placeholders, delta
 
 // Test cases from https://docs.yjs.dev/api/delta-format
 // https://quilljs.com/docs/delta/#playground
 let tests = testList "Y.Delta" [
     test "toAdaptive ins 'abc'" {
         let input = ResizeArray [
-            jsOptions<Y.Event.Delta> (fun o ->
-                o.insert <- Some (!^ "abc")
-            )
+            Y.Delta.Insert "abc"
         ]
-        let delta = Delta.toAdaptive input
+        let delta = Y.Text.Delta.toAdaptive input
         Expect.equal (IndexListDelta.toList delta) [
-            (Index.at 0, ElementOperation.Set 'a')
-            (Index.at 1, ElementOperation.Set 'b')
-            (Index.at 2, ElementOperation.Set 'c')
+            (Index.at 0, ElementOperation<char>.Set 'a')
+            (Index.at 1, ElementOperation<char>.Set 'b')
+            (Index.at 2, ElementOperation<char>.Set 'c')
         ] ""
     }
     test "toAdaptive ret 0, ins 'abc'" {
         let input = ResizeArray [
-            jsOptions<Y.Event.Delta> (fun o ->
-                o.retain <- Some 0
-            )
-            jsOptions<Y.Event.Delta> (fun o ->
-                o.insert <- Some (!^ "abc")
-            )
+            Y.Delta.Retain 0
+            Y.Delta.Insert "abc"
         ]
-        let delta = Delta.toAdaptive input
+        let delta = Y.Text.Delta.toAdaptive input
         Expect.equal (IndexListDelta.toList delta) [
             (Index.at 0, ElementOperation.Set 'a')
             (Index.at 1, ElementOperation.Set 'b')
@@ -53,14 +54,10 @@ let tests = testList "Y.Delta" [
     }
     test "toAdaptive ret 2, ins 'abc'" {
         let input = ResizeArray [
-            jsOptions<Y.Event.Delta> (fun o ->
-                o.retain <- Some 2
-            )
-            jsOptions<Y.Event.Delta> (fun o ->
-                o.insert <- Some (!^ "abc")
-            )
+            Y.Delta.Retain 2
+            Y.Delta.Insert "abc"
         ]
-        let delta = Delta.toAdaptive input
+        let delta = Y.Text.Delta.toAdaptive input
         Expect.equal (IndexListDelta.toList delta) [
             (Index.at 2, ElementOperation.Set 'a')
             (Index.at 3, ElementOperation.Set 'b')
@@ -69,14 +66,10 @@ let tests = testList "Y.Delta" [
     }
     test "toAdaptive ret 2, del 2" {
         let input = ResizeArray [
-            jsOptions<Y.Event.Delta> (fun o ->
-                o.retain <- Some 2
-            )
-            jsOptions<Y.Event.Delta> (fun o ->
-                o.delete <- Some 2
-            )
+            Y.Delta.Retain 2
+            Y.Delta.Delete 2
         ]
-        let delta = Delta.toAdaptive input
+        let delta = Y.Text.Delta.toAdaptive input
         Expect.equal (IndexListDelta.toList delta) [
             (Index.at 2, ElementOperation.Remove)
             (Index.at 3, ElementOperation.Remove)
@@ -84,11 +77,9 @@ let tests = testList "Y.Delta" [
     }
     test "toAdaptive del 0" {
         let input = ResizeArray [
-            jsOptions<Y.Event.Delta> (fun o ->
-                o.delete <- Some 0
-            )
+            Y.Delta.Delete 0
         ]
-        let delta = Delta.toAdaptive input
+        let delta = Y.Text.Delta.toAdaptive input
         Expect.equal (IndexListDelta.toList delta) [ ] ""
     }
     test "ofAdaptive ins 'abc'" {
@@ -97,9 +88,10 @@ let tests = testList "Y.Delta" [
             1, ElementOperation.Set 'b'
             2, ElementOperation.Set 'c'
         ]
-        let delta = Delta.ofAdaptive (toIndexPositionLookup input) (toIndexListDelta input)
+        let list, delta = toIndexListDelta input
+        let delta = Y.Text.Delta.ofAdaptive list delta
         Expect.equal (List.ofSeq delta) [
-            Y.Event.Delta.Insert (!^ "abc")
+            Y.Delta.Insert "abc"
         ] ""
     }
     test "ofAdaptive ret 2, ins 'abc', ret 2, ins 'efg'" {
@@ -111,12 +103,13 @@ let tests = testList "Y.Delta" [
             8, ElementOperation.Set 'f'
             9, ElementOperation.Set 'g'
         ]
-        let delta = Delta.ofAdaptive (toIndexPositionLookup input) (toIndexListDelta input)
+        let list, delta = toIndexListDelta input
+        let delta = Y.Text.Delta.ofAdaptive list delta
         Expect.equal (List.ofSeq delta) [
-            Y.Event.Delta.Retain 2
-            Y.Event.Delta.Insert (!^ "abc")
-            Y.Event.Delta.Retain 2
-            Y.Event.Delta.Insert (!^ "efg")
+            Y.Delta.Retain 2
+            Y.Delta.Insert ("abc")
+            Y.Delta.Retain 2
+            Y.Delta.Insert ("efg")
         ] ""
     }
     test "ofAdaptive ret 2, del 2" {
@@ -124,17 +117,33 @@ let tests = testList "Y.Delta" [
             2, ElementOperation.Remove
             3, ElementOperation.Remove
         ]
-        let delta = Delta.ofAdaptive (toIndexPositionLookup input) (toIndexListDelta input)
+        let list, delta = toIndexListDelta input
+        let delta = Y.Text.Delta.ofAdaptive list delta
         Expect.equal (List.ofSeq delta) [
-            Y.Event.Delta.Retain 2
-            Y.Event.Delta.Delete 2
+            Y.Delta.Retain 2
+            Y.Delta.Delete 2
         ] ""
     }
     test "ofAdaptive []" {
+        let input = []
+        let list, delta = toIndexListDelta input
+        let delta = Y.Text.Delta.ofAdaptive list delta
+        Expect.equal (List.ofSeq delta) [] ""
+    }
+    test "ofAdaptive ins 'abc', ret 2, del 2" {
         let input = [
+            0, ElementOperation.Set 'a'
+            1, ElementOperation.Set 'b'
+            2, ElementOperation.Set 'c'
+            5, ElementOperation.Remove
+            6, ElementOperation.Remove
         ]
-        let delta = Delta.ofAdaptive (toIndexPositionLookup input) (toIndexListDelta input)
+        let list, delta = toIndexListDelta input
+        let delta = Y.Text.Delta.ofAdaptive list delta
         Expect.equal (List.ofSeq delta) [
+            Y.Delta.Insert ("abc")
+            Y.Delta.Retain 2
+            Y.Delta.Delete 2
         ] ""
     }
     // test "ytext to cval" {

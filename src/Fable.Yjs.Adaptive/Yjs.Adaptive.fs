@@ -58,8 +58,8 @@ module Index =
 
 module Y =
     module Delta =
-        let toAdaptive (delta : Y.Event.Delta ResizeArray) =
-            let generate f start count =
+        module ToAdaptive =
+            let private generate f start count =
                 let indexes = Index.generate f start count
                 let ops' = IndexListDelta.ofList indexes
                 let index' =
@@ -69,87 +69,111 @@ module Y =
                     |> Option.defaultValue start
                 index', ops'
 
-            let folder ((index, ops) : Index * IndexListDelta<char>) = function
-            | Y.Event.Delta.Retain ret ->
-                let index' = Index.increment index ret
-                index', ops
-            | Y.Event.Delta.Delete del ->
-                let index', ops' = generate (fun _ j -> j, ElementOperation<char>.Remove) index (del - 1)
-                index', IndexListDelta.combine ops ops'
-            | Y.Event.Delta.Insert (U4.Case1 ins) ->
-                let index', ops' = generate (fun i j -> j, ElementOperation<char>.Set (ins[i])) index (ins.Length - 1)
-                index', IndexListDelta.combine ops ops'
-            
+            let folder getItem getCount ((index, ops) : Index * IndexListDelta<'b>) delta =
+                match delta with
+                | Y.Delta.Retain ret ->
+                    let index' = Index.increment index ret
+                    index', ops
+                | Y.Delta.Delete del ->
+                    let index', ops' = generate (fun _ j -> j, ElementOperation<'b>.Remove) index (del - 1)
+                    index', IndexListDelta.combine ops ops'
+                | Y.Delta.Insert (ins) ->
+                    let index', ops' = generate (fun i j -> j, ElementOperation<'b>.Set (getItem ins i)) index (getCount ins - 1)
+                    index', IndexListDelta.combine ops ops'
+
+        let toAdaptive folder (delta : Y.Delta<'a> ResizeArray ) : IndexListDelta<'b> =
             delta 
             |> Seq.fold folder (Index.zero, IndexListDelta.empty)
             |> snd
 
-        let ofAdaptive getPos (delta : IndexListDelta<_>) : ResizeArray<Y.Event.Delta> =
-            let (|Delta|) (op : ElementOperation<_>) =
+        module OfAdaptive =
+            let private (|Delta|) append empty (op : ElementOperation<'a>) =
                 match op with
-                | ElementOperation.Set c -> Y.Event.Delta.Insert (!^ $"{c}")
-                | ElementOperation.Remove -> Y.Event.Delta.Delete 1
+                | ElementOperation.Set c -> Y.Delta.Insert (append empty c)
+                | ElementOperation.Remove -> Y.Delta.Delete 1
 
-            let folder getPos (state : (Index * int * Y.Event.Delta) list) (index : Index, op : ElementOperation<char>) =
+            let folder getPosition (append : 'b -> 'a -> 'b) empty (state : (Index * int * Y.Delta<'b>) list) (index : Index, op : ElementOperation<'a>) =
                 match state, op with
-                | [], Delta delta
+                | [], Delta append empty delta
                     when index = Index.zero ->
                     (index, 0, delta) :: []
-                | [], Delta delta ->
-                    let pos = getPos index
-                    (index, pos, delta) :: (index, pos, Y.Event.Delta.Retain pos) :: []
-                | (prevIndex, prevPos, Y.Event.Delta.Insert (U4.Case1 ins)) :: rest, ElementOperation.Set c
+                | [], Delta append empty delta ->
+                    let pos = getPosition index + 1
+                    (index, pos, delta) :: (index, pos, Y.Delta.Retain pos) :: []
+                | (prevIndex, prevPos, Y.Delta.Insert (ins)) :: rest, ElementOperation.Set c
                     when index = Index.after prevIndex ->
-                    (index, prevPos + 1, Y.Event.Delta.Insert (!^ $"{ins}{c}")) :: rest
-                | (prevIndex, prevPos, Y.Event.Delta.Delete (del)) :: rest, ElementOperation.Remove
+                    (index, prevPos + 1, Y.Delta.Insert (append ins c)) :: rest
+                | (prevIndex, prevPos, Y.Delta.Delete (del)) :: rest, ElementOperation.Remove
                     when index = Index.after prevIndex ->
-                    (index, prevPos + 1, Y.Event.Delta.Delete (del + 1)) :: rest
-                | (prevIndex, prevPos, prevDelta) :: rest, Delta delta
+                    (index, prevPos + 1, Y.Delta.Delete (del + 1)) :: rest
+                | (prevIndex, prevPos, prevDelta) :: rest, Delta append empty delta
                     when index = Index.after prevIndex ->
                     (index, prevPos + 1, delta) :: (prevIndex, prevPos, prevDelta) :: rest
-                | (prevIndex, prevPos, prevDelta) :: rest, Delta delta ->
-                    let pos = getPos index
-                    let ret = pos - prevPos - 1
-                    (index, pos, delta) :: (index, pos, Y.Event.Delta.Retain ret) :: (prevIndex, prevPos, prevDelta) :: rest
+                | (prevIndex, prevPos, prevDelta) :: rest, Delta append empty delta ->
+                    let pos = getPosition index
+                    let ret = pos - prevPos
+                    (index, pos, delta) :: (index, pos, Y.Delta.Retain ret) :: (prevIndex, prevPos, prevDelta) :: rest
 
-
+        let ofAdaptive folder (delta : IndexListDelta<'a>) : ResizeArray<Y.Delta<'b>> =      
             delta
             |> IndexListDelta.toList
-            |> List.fold (folder getPos) []
+            |> List.fold folder []
             |> List.map (fun (_,_,x) -> x)
             |> List.rev
             |> ResizeArray
 
     module Text =
-        let toAdaptive (text : Y.Text) : char clist =
-            let text' : char clist = text.toString () :> _ seq |> clist
-            // TODO something with these disposables
-            // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakRef
-            let mutable sentinel = false
-            let d1 =
-                // https://docs.yjs.dev/api/delta-format
-                let f (e : Y.TextEvent) (tx : Y.Transaction) =
-                    if sentinel then
-                        sentinel <- false
-                        () 
-                    else
-                    sentinel <- true
-                    let delta' = TextEvent.toAdaptive e.delta
-                    transact (fun () -> text'.Perform delta')
+        module Delta =
+            let toAdaptive delta =
+                let folder = Delta.ToAdaptive.folder (fun (str : string) i -> str[i]) (fun str -> str.Length)
+                Delta.toAdaptive folder delta
 
-                text.observe f
-                {
-                    new System.IDisposable with
-                        member _.Dispose () = text.unobserve f
-                }
+            let ofAdaptive list delta =
+                let folder =
+                    Delta.OfAdaptive.folder
+                        (fun i -> IndexList.tryGetPosition i list |> Option.get)
+                        (fun a b -> a + System.Char.ToString b)
+                        ""
+                Delta.ofAdaptive folder delta
 
-            let d2 = text'.AddCallback(fun list delta ->
-                if sentinel then
-                    sentinel <- false
-                else
-                sentinel <- true
-                let delta' = TextEvent.ofAdaptive (fun i -> list.TryGetPosition i |> Option.get) delta
-                text.applyDelta delta'
-            )
+        // let ofAdaptive (atext : char clist) : Y.Text =
+        //     let initial = string atext
+        //     let ytext = Y.Text.Create (initial)
+        //     let ysub =
+        //         let f (e : Y.Text.Event) (tx : Y.Transaction) =
+                    
 
-            text'
+
+    // module Text =
+    //     let toAdaptive (text : Y.Text) : char clist =
+    //         let text' : char clist = text.toString () :> _ seq |> clist
+    //         // TODO something with these disposables
+    //         // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakRef
+    //         let mutable sentinel = false
+    //         let d1 =
+    //             // https://docs.yjs.dev/api/delta-format
+    //             let f (e : Y.TextEvent) (tx : Y.Transaction) =
+    //                 if sentinel then
+    //                     sentinel <- false
+    //                     () 
+    //                 else
+    //                 sentinel <- true
+    //                 let delta' = TextEvent.toAdaptive e.delta
+    //                 transact (fun () -> text'.Perform delta')
+
+    //             text.observe f
+    //             {
+    //                 new System.IDisposable with
+    //                     member _.Dispose () = text.unobserve f
+    //             }
+
+    //         let d2 = text'.AddCallback(fun list delta ->
+    //             if sentinel then
+    //                 sentinel <- false
+    //             else
+    //             sentinel <- true
+    //             let delta' = TextEvent.ofAdaptive (fun i -> list.TryGetPosition i |> Option.get) delta
+    //             text.applyDelta delta'
+    //         )
+
+    //         text'

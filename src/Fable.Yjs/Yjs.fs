@@ -10,8 +10,7 @@ open Browser.Types
 
 type Array<'T> = System.Collections.Generic.IList<'T>
 type Function = System.Action
-type IterableIterator<'T> =
-    interface end
+type IterableIterator<'T> = 'T seq
 type Iterable<'T> = 'T seq
 
 type [<AllowNullLiteral>] IteratorYieldResult<'TYield> =
@@ -716,7 +715,7 @@ module Types =
             /// Returns the values for each element in the YMap Type.
             abstract values: unit -> IterableIterator<obj option>
             /// Returns an Iterator of [key, value] pairs
-            abstract entries: unit -> IterableIterator<obj option>
+            abstract entries: unit -> IterableIterator<(string * obj option)>
             /// <summary>Executes a provided function on once on every key-value pair.</summary>
             /// <param name="f">A function to execute on every element of this YArray.</param>
             abstract forEach: f: ('MapType -> string -> YMap<'MapType> -> unit) -> YMapForEachReturn
@@ -1610,7 +1609,7 @@ module Utils =
             abstract _mergeStructs: Array<AbstractStruct> with get, set
             abstract origin: obj option with get, set
             /// Stores meta information on the transaction
-            abstract meta: Map<obj option, obj option> with get, set
+            abstract meta: Map<string, obj> with get, set
             /// Whether this change originates from this doc.
             abstract local: bool with get, set
             abstract subdocsAdded: Set<Doc> with get, set
@@ -2020,7 +2019,11 @@ module Utils =
             abstract attributes: DeltaAttributes option with get, set
 
 module Y =
+    type Doc = Utils.Doc.Doc
     type Text = Types.YText.YText
+    type Map<'a> = Types.YMap.YMap<'a>
+    type Array<'a> = Types.YArray.YArray<'a>
+    type AbstractType = Types.AbstractType.AbstractType<obj>
     type Transaction = Utils.Transaction.Transaction
     
     type Delta<'insert> = Utils.YEvent.Delta<'insert>

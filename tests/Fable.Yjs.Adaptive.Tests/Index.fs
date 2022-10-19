@@ -37,4 +37,10 @@ let tests = testList "Index" [
             Index.after(Index.after(Index.after(Index.zero)))
         ) ""
     }
+    test "at 0 equals IndexList.tryFind" {
+        let ls = IndexList.ofList [ 'a'; 'b'; 'c' ]
+        Expect.equal (ls.[0]) 'a' ""
+        Expect.equal (ls.TryFind 'a' |> Option.get) (Index.after Index.zero) ""
+        // Expect.equal (ls.TryFind 'a' |> Option.get) (Index.at 0) ""
+    }
 ]

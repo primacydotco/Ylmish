@@ -13,6 +13,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{8DC3EFAC
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Fable.Yjs.Adaptive.Tests", "tests\Fable.Yjs.Adaptive.Tests\Fable.Yjs.Adaptive.Tests.fsproj", "{F7751C14-E748-4059-A57B-6C281CABB58A}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Fable.Yjs.Adaptive.Elmish", "src\Fable.Yjs.Adaptive.Elmish\Fable.Yjs.Adaptive.Elmish.fsproj", "{16E647B7-67F8-42D8-B86D-D4A4956C20AE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -34,10 +36,15 @@ Global
 		{F7751C14-E748-4059-A57B-6C281CABB58A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F7751C14-E748-4059-A57B-6C281CABB58A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F7751C14-E748-4059-A57B-6C281CABB58A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{16E647B7-67F8-42D8-B86D-D4A4956C20AE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{16E647B7-67F8-42D8-B86D-D4A4956C20AE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{16E647B7-67F8-42D8-B86D-D4A4956C20AE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{16E647B7-67F8-42D8-B86D-D4A4956C20AE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{FFE20514-624F-4B38-830A-B3C1557E8273} = {05DC4E92-028D-4B9F-9F26-915B3BD08AF5}
 		{ED9E95EC-5871-4553-8B3E-F1FB9F744A57} = {05DC4E92-028D-4B9F-9F26-915B3BD08AF5}
 		{F7751C14-E748-4059-A57B-6C281CABB58A} = {8DC3EFAC-3FEA-4F05-95FA-D9E8BB67E6A7}
+		{16E647B7-67F8-42D8-B86D-D4A4956C20AE} = {05DC4E92-028D-4B9F-9F26-915B3BD08AF5}
 	EndGlobalSection
 EndGlobal

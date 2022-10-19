@@ -7,4 +7,5 @@ let main _ =
     Mocha.runTests <| testList "" [
         Index.tests
         Y.Delta.tests
+        Y.Text.tests
     ]

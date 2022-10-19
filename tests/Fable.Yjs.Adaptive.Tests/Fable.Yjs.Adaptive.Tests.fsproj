@@ -5,6 +5,7 @@
     <ItemGroup>
         <Compile Include="Index.fs" />
         <Compile Include="Y.Delta.fs" />
+        <Compile Include="Y.Text.fs" />
         <Compile Include="Program.fs" />
     </ItemGroup>
     <ItemGroup>

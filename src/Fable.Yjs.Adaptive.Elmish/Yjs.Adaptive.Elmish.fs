@@ -453,6 +453,8 @@ module AEncode =
         a |> AMap.map f |> AElement.Map
 
 module ADecode =
+    open FSharp.Data.Adaptive
+
     type PathSegment = 
         | ObjectKey   of string
         | ArrayIndex  of int
@@ -464,52 +466,201 @@ module ADecode =
     type Path = PathSegment list
 
     type Error =
-        | NotConvertible of {| Path : Path; Actual : AKind; Expected : AKind list |}
+        | NotConvertible of {|
+            Path : Path
+            Kind: {| Actual : AKind; Expected : AKind list |}
+            Type: {| Actual : System.Type; Expected : System.Type list |} option
+            |}
         | MissingProperty of {| Path : Path |}
 
-    type Decoder<'out> = Path * AElement -> Result<'out, Error>
+    /// the outer aval represents the encoding itself changing
+    /// which could happen if another client upgrades and publishes its changes
 
-    /// Creates a Decoder<'a> from an 'a.
-    let inline ok c : Decoder<_> = fun _ -> Ok c
-    
-    /// Creates a Decoder<_> from an error.
-    let inline error e : Decoder<_> = fun _ -> Error e
+    // this would mean the decoding would have to return an aval.
+    // what could/would the application do with it? get the intial value and then complain on subsequent changes
 
-    /// Lift a Result<'a, Failure> to a Decoder<'a>.
-    let inline ofResult (result : Result<'a, Error>) : Decoder<'a> =
-        fun _ -> result
 
-    let bind (f : 'a -> Decoder<'b>) (a : Decoder<'a>): Decoder<'b> =
-        fun dep -> a dep |> Result.bind (fun s -> f s dep)
+    type Decoded<'Result> = Result<'Result, Error> aval
 
-    let map (f : 'a -> 'b) (a : Decoder<'a>) : Decoder<'b> =
-        a >> Result.map f
+    module Decoded =
+        let inline ofResult c : Decoded<'a> = AVal.constant c
+        let inline ok c : Decoded<'a> = ofResult <| Ok c
+        let inline error e : Decoded<'a> = ofResult <| Error e
 
-    let private value (f : 'a -> Result<'b, Error>) : Decoder<'a> -> Decoder<'b> =
-        bind (f >> ofResult)
+        let inline map (f : 'a -> 'b) (a : Decoded<'a>) :  Decoded<'b> =
+            AVal.map (Result.map f) a
 
-    let optional f : Decoder<_> -> Decoder<_> =
-        value <| fun (path, element) ->
-            match element with
-            | Some el -> f (path, el) |> Result.map Some
-            | None    -> Ok None
+        let inline bind (f : 'a -> Decoded<'b>) (a : Decoded<'a>) : Decoded<'b> =
+            AVal.bind (function Ok v -> f v | Error e -> error e) a
 
-    let required f : Decoder<_> -> Decoder<_> =
-        value <| fun (path, element) ->
-            match element with
-            | Some el -> f (path, el)
-            | None    -> Error <| MissingProperty {| Path = path |}
+        let traverse (f : 'a -> Decoded<'b>) (source : 'a alist) : Decoded<'b alist> =
 
-    let map' f : Decoder<_> -> Decoder<_> =
-        value <| fun (path, element) ->
-            match element with
-            | AElement.Map el ->
-                f (path, el)
-            | el -> Error <| NotConvertible {|
+            let folder (state : aval<Result<'b alist, Error>>) (next : 'a) = adaptive {
+                let! state = state
+                let! next = f next
+                match state, next with
+                | Ok state, Ok next ->
+                    return Ok <| AList.append state (AList.single next) 
+            }
+
+            let zzz = AList.fold folder (AVal.constant <| Ok AList.empty) source // <----
+            let zzz = AVal.bind id zzz
+            zzz
+
+    // Something like Reader<Aval<Result<T>> sandwich
+    type Decoder<'Element, 'Result> = Path * 'Element -> Decoded<'Result>
+    type Decoder<'Result> = Decoder<AElement, 'Result>
+
+
+    module Decoder = 
+        /// Lift a Result<'a, Failure> to a Decoder<'a>.
+        let inline ofResult (result : Result<'Result, Error>) : Decoder<_,'Result> =
+            fun _ -> Decoded.ofResult result
+
+        /// Creates a Decoder<'a> from an 'a.
+        let inline ok c : Decoder<_,_> =
+            fun _ -> Decoded.ok c
+
+        /// Creates a Decoder<_> from an error.
+        let inline error e : Decoder<_,_> =
+            fun _ -> Decoded.error e
+
+        let map (f : 'a -> 'b) (a : Decoder<'a>) : Decoder<'b> =
+            a >> Decoded.map f
+
+        let bind (f : 'a -> Decoder<_,'b>) (a : Decoder<_,'a>) : Decoder<_,'b> =
+            fun dep -> a dep |> Decoded.bind (fun x -> f x dep)
+
+        let private value (f : 'a -> Result<'b, Error>) : Decoder<_, 'a> -> Decoder<_, 'b> =
+            bind (f >> ofResult)
+
+        let optional f : Decoder<_> -> Decoder<_> =
+            value <| fun (path, element) ->
+                match element with
+                | Some el -> f (path, el) |> Result.map Some
+                | None    -> Ok None
+
+        let required f : Decoder<_> -> Decoder<_> =
+            value <| fun (path, element) ->
+                match element with
+                | Some el -> f (path, el)
+                | None    -> Error <| MissingProperty {| Path = path |}
+
+    // let map' (f : Decoder<_,_>) : Decoder<_> -> Decoder<_> =
+    //     value <| fun (path, element) ->
+    //         match element with
+    //         | AElement.Map el ->
+    //             f (path, el)
+    //         | el -> Error <| NotConvertible {|
+    //             Path = path
+    //             Kind = {| 
+    //                 Actual = el.toKind ()
+    //                 Expected = [ AKind.Map ] |}
+    //             Type = None
+    //         |}
+
+        
+        let constant type' : Decoder<_,_> = fun (path, el) ->
+            match el with
+            | AElement.Constant v when v.GetType () = type'->
+                Decoded.ok v
+            | AElement.Constant v ->
+                Decoded.error <| NotConvertible {|
                 Path = path
-                Actual = el.toKind ()
-                Expected = [ AKind.Map ] |}
+                Kind = {|
+                    Actual = el.toKind ()
+                    Expected = [ AKind.Constant ] |}
+                Type = Some {|
+                    Actual = v.GetType()
+                    Expected = [ type' ]
+                |} |}
+            | el ->
+                Decoded.error <| NotConvertible {|
+                Path = path
+                Kind = {|
+                    Actual = el.toKind ()
+                    Expected = [ AKind.Constant ] |}
+                Type = None |}
 
+        [<RequiresExplicitTypeArguments>]
+        let inline constant'<'a> : Decoder<'a> =
+            constant (typeof<'a>)
+            |> map (fun r -> r :?> 'a)
+
+        let value type' : Decoder<_,_> = fun (path, el) ->
+            match el with
+            | AElement.Value v when v.ContentType = type' ->
+                Decoded.ok v
+            | AElement.Value v ->
+                Decoded.error <| NotConvertible {|
+                Path = path
+                Kind = {|
+                    Actual = el.toKind ()
+                    Expected = [ AKind.Constant ] |}
+                Type = Some {|
+                    Actual = v.ContentType
+                    Expected = [ type' ]
+                |} |}
+            | el ->
+                Decoded.error <| NotConvertible {|
+                Path = path
+                Kind = {|
+                    Actual = el.toKind ()
+                    Expected = [ AKind.Constant ] |}
+                Type = None |}
+
+        let list f : Decoder<_,_> = fun (path, el) ->
+            match el with
+            | AElement.List v ->
+                v |> Decoded.traverse f /// just did this, idk what next
+
+        let key key (f : Decoder<_,_>) : Decoder<_, _> = fun (path, el : amap<string, AElement>) -> adaptive {
+            let path = ObjectKey key :: path
+
+            let! value = el |> AMap.tryFind key
+
+            match value with
+            | None ->
+                return Error <| MissingProperty {| Path = path |}
+            | Some value ->
+                return! f (path, value)
+        }
+
+    // let key k (f : Decoder<_,_>) (path, el : amap<string, AElement>) =
+
+
+    //         let path = ObjectKey k :: path
+
+    //         let value =
+    //             AMap.tryFind k el
+    //             |> AVal.map (function
+    //             | Some v -> Ok v
+    //             | None -> Error <| MissingProperty {| Path = path |})
+    //             // |> AVal.bind (function
+    //             // | Ok (AElement.Value x) -> x
+    //             // | Ok (AElement.Constant x) -> AVal.constant x)
+    //             |> AVal.map (Result.bind (fun x -> f (path, x)))
+
+    //         AVal.force value
+    //         |> Result.map (fun _ ->
+    //             // Any subsequent errors will be runtime errors.
+    //             value
+    //             |> AVal.map (function
+    //             | Ok v -> v
+    //             // TODO: Print runtime error nicely
+    //             | Error e -> invalidOp $"%A{e}"))
+
+    type DecodeBuilder() =
+        member _.Return x = Decoder.ok x
+        member _.Bind (m, f) = Decoder.bind f m
+        member _.ReturnFrom m = m
+        member _.Zero () = Decoder.ok ()
+        member _.Run f = f
+
+    let decode = DecodeBuilder()
+
+    let (?) decode path = Decoder.key path decode
+         
 
 module ExampleEncode =
     open FSharp.Data.Adaptive
@@ -530,6 +681,14 @@ module ExampleEncode =
 
     let someFirstStep (amodel : Sample.AdaptiveModel) : cmap<string, obj> =
         ()
+
+module ExampleDecode =
+    open ADecode
+
+    let decode = decode {
+        let! asdf = Decoder.key "name" Decoder.constant'<string>
+        return asdf
+    }
 
 type Navigable<'model, 'msg> =
     | Set of 'model

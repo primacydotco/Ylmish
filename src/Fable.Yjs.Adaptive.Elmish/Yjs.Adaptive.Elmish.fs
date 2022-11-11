@@ -452,6 +452,58 @@ module AEncode =
     let map f a =
         a |> AMap.map f |> AElement.Map
 
+
+type Validation<'Ok, 'Error> = Result<'Ok, 'Error list>
+
+// https://github.com/demystifyfp/FsToolkit.ErrorHandling/blob/master/src/FsToolkit.ErrorHandling/Validation.fs
+[<RequireQualifiedAccess>]
+module Validation =
+
+    let inline ok (value: 'ok) : Validation<'ok, 'error> =
+        Ok value
+
+    let inline error (error: 'error) : Validation<'ok, 'error> =
+        Error [ error ]
+
+    let inline errors (errors: 'error list) : Validation<'ok, 'error> =
+        Error errors
+
+    let inline ofResult (result: Result<'ok, 'error>) : Validation<'ok, 'error> =
+        Result.mapError List.singleton result
+
+    let inline apply
+        (applier: Validation<'okInput -> 'okOutput, 'error>)
+        (input: Validation<'okInput, 'error>)
+        : Validation<'okOutput, 'error> =
+        match applier, input with
+        | Ok f, Ok x ->
+            Ok (f x)
+        | Error errs, Ok _
+        | Ok _, Error errs ->
+            Error errs
+        | Error errs1, Error errs2 ->
+            Error (errs1 @ errs2)
+
+    let inline map
+        ([<InlineIfLambda>] mapper: 'okInput -> 'okOutput)
+        (input: Validation<'okInput, 'error>)
+        : Validation<'okOutput, 'error> =
+        Result.map mapper input
+
+    let inline zip
+        (left: Validation<'left, 'error>)
+        (right: Validation<'right, 'error>)
+        : Validation<'left * 'right, 'error> =
+        match left, right with
+        | Ok x1res, Ok x2res ->
+            Ok (x1res, x2res)
+        | Error e, Ok _
+        | Ok _, Error e ->
+            Error e
+        | Error e1, Error e2 ->
+            Error (e1 @ e2)
+
+
 module ADecode =
     open FSharp.Data.Adaptive
 
@@ -480,32 +532,49 @@ module ADecode =
     // what could/would the application do with it? get the intial value and then complain on subsequent changes
 
 
-    type Decoded<'Result> = Result<'Result, Error> aval
+    type Decoded<'Result> = Validation<'Result, Error> aval
 
     module Decoded =
-        let inline ofResult c : Decoded<'a> = AVal.constant c
-        let inline ok c : Decoded<'a> = ofResult <| Ok c
-        let inline error e : Decoded<'a> = ofResult <| Error e
+        let inline ofValidation c : Decoded<'a> = AVal.constant c
+        let inline ok c : Decoded<'a> = ofValidation <| Validation.ok c
+        let inline error e : Decoded<'a> = ofValidation <| Validation.error e
+        let inline errors e : Decoded<'a> = ofValidation <| Validation.errors e
 
         let inline map (f : 'a -> 'b) (a : Decoded<'a>) :  Decoded<'b> =
-            AVal.map (Result.map f) a
+            AVal.map (Validation.map f) a
 
         let inline bind (f : 'a -> Decoded<'b>) (a : Decoded<'a>) : Decoded<'b> =
-            AVal.bind (function Ok v -> f v | Error e -> error e) a
+            AVal.bind (function Ok v -> f v | Error e -> errors e) a
 
-        let traverse (f : 'a -> Decoded<'b>) (source : 'a alist) : Decoded<'b alist> =
+        let traversei (f : int -> 'a -> Decoded<'b>) (source : 'a alist) : Decoded<'b alist> =
 
-            let folder (state : aval<Result<'b alist, Error>>) (next : 'a) = adaptive {
-                let! state = state
-                let! next = f next
-                match state, next with
-                | Ok state, Ok next ->
-                    return Ok <| AList.append state (AList.single next) 
-            }
+            let folder (i : int, state : Decoded<'b alist>) (next : 'a) =
+                let result = adaptive {
+                    let! state = state
+                    let! next = f i next
+                    match state, next with
+                    | Ok state, Ok next ->
+                        return Validation.ok <| AList.append state (AList.single next)
+                    | Error e, Ok _
+                    | Ok _, Error e ->
+                        return Validation.errors e
+                    | Error e1, Error e2 ->
+                        return Validation.errors (e1 @ e2)             
+                }
+                i + 1, result
 
-            let zzz = AList.fold folder (AVal.constant <| Ok AList.empty) source // <----
-            let zzz = AVal.bind id zzz
+            let zzz = AList.fold folder (0, AVal.constant <| Ok AList.empty) source
+            let zzz = zzz |> AVal.map snd |> AVal.bind id // surely I can avoid this?
             zzz
+
+        let flatten (decoded : Decoded<'a aval>) : Decoded<'a> = adaptive {
+            match! decoded with
+            | Ok value ->
+                let! value = value
+                return Ok value
+            | Error e ->
+                return Error e
+        }
 
     // Something like Reader<Aval<Result<T>> sandwich
     type Decoder<'Element, 'Result> = Path * 'Element -> Decoded<'Result>
@@ -513,9 +582,9 @@ module ADecode =
 
 
     module Decoder = 
-        /// Lift a Result<'a, Failure> to a Decoder<'a>.
-        let inline ofResult (result : Result<'Result, Error>) : Decoder<_,'Result> =
-            fun _ -> Decoded.ofResult result
+        /// Lift a Validation<'a, Failure> to a Decoder<'a>.
+        let inline ofValidation (result : Validation<'Result, Error>) : Decoder<_,'Result> =
+            fun _ -> Decoded.ofValidation result
 
         /// Creates a Decoder<'a> from an 'a.
         let inline ok c : Decoder<_,_> =
@@ -531,20 +600,20 @@ module ADecode =
         let bind (f : 'a -> Decoder<_,'b>) (a : Decoder<_,'a>) : Decoder<_,'b> =
             fun dep -> a dep |> Decoded.bind (fun x -> f x dep)
 
-        let private value (f : 'a -> Result<'b, Error>) : Decoder<_, 'a> -> Decoder<_, 'b> =
-            bind (f >> ofResult)
+        let private value (f : 'a -> Validation<'b, Error>) : Decoder<_, 'a> -> Decoder<_, 'b> =
+            bind (f >> ofValidation)
 
         let optional f : Decoder<_> -> Decoder<_> =
             value <| fun (path, element) ->
                 match element with
-                | Some el -> f (path, el) |> Result.map Some
+                | Some el -> f (path, el) |> Validation.map Some
                 | None    -> Ok None
 
         let required f : Decoder<_> -> Decoder<_> =
             value <| fun (path, element) ->
                 match element with
                 | Some el -> f (path, el)
-                | None    -> Error <| MissingProperty {| Path = path |}
+                | None    -> Validation.error <| MissingProperty {| Path = path |}
 
     // let map' (f : Decoder<_,_>) : Decoder<_> -> Decoder<_> =
     //     value <| fun (path, element) ->
@@ -587,7 +656,7 @@ module ADecode =
             constant (typeof<'a>)
             |> map (fun r -> r :?> 'a)
 
-        let value type' : Decoder<_,_> = fun (path, el) ->
+        let value type' : Decoder<_> = fun (path, el) ->
             match el with
             | AElement.Value v when v.ContentType = type' ->
                 Decoded.ok v
@@ -596,7 +665,7 @@ module ADecode =
                 Path = path
                 Kind = {|
                     Actual = el.toKind ()
-                    Expected = [ AKind.Constant ] |}
+                    Expected = [ AKind.Value ] |}
                 Type = Some {|
                     Actual = v.ContentType
                     Expected = [ type' ]
@@ -606,25 +675,49 @@ module ADecode =
                 Path = path
                 Kind = {|
                     Actual = el.toKind ()
-                    Expected = [ AKind.Constant ] |}
+                    Expected = [ AKind.Value ] |}
                 Type = None |}
 
-        let list f : Decoder<_,_> = fun (path, el) ->
+        [<RequiresExplicitTypeArguments>]
+        let inline value'<'a> : Decoder<'a aval> =
+            value (typeof<'a>)
+            |> map (fun r -> r :?> 'a aval)
+
+        let list (f : Decoder<_>) : Decoder<_> = fun (path, el) ->
+            let f i el = f (ArrayIndex i :: path, el)
             match el with
             | AElement.List v ->
-                v |> Decoded.traverse f /// just did this, idk what next
+                v |> Decoded.traversei f
+            | el ->
+                Decoded.error <| NotConvertible {|
+                Path = path
+                Kind = {|
+                    Actual = el.toKind ()
+                    Expected = [ AKind.List ] |}
+                Type = None |}
 
-        let key key (f : Decoder<_,_>) : Decoder<_, _> = fun (path, el : amap<string, AElement>) -> adaptive {
-            let path = ObjectKey key :: path
+        let key key (f : Decoder<_>) : Decoder<_> = fun (path, el) ->
+            match el with
+            | AElement.Map v -> adaptive {
+                    let path = ObjectKey key :: path
 
-            let! value = el |> AMap.tryFind key
+                    let! value = v |> AMap.tryFind key
 
-            match value with
-            | None ->
-                return Error <| MissingProperty {| Path = path |}
-            | Some value ->
-                return! f (path, value)
-        }
+                    match value with
+                    | None -> 
+                        return Validation.error <| MissingProperty {| Path = path |}
+                    | Some value ->
+                        return! f (path, value)
+                }
+            | el ->
+                Decoded.error <| NotConvertible {|
+                Path = path
+                Kind = {|
+                    Actual = el.toKind ()
+                    Expected = [ AKind.Map ] |}
+                Type = None |}
+
+
 
     // let key k (f : Decoder<_,_>) (path, el : amap<string, AElement>) =
 
@@ -657,6 +750,19 @@ module ADecode =
         member _.Zero () = Decoder.ok ()
         member _.Run f = f
 
+
+
+        member _.key (key : string, decoder : Decoder<aval<'a>>) =
+            Decoder.key key decoder
+            >> Decoded.flatten
+            // here we flatten the outer aval (changes to the mapping) with the inner aval (changes to the values)
+            // does this matter?
+
+        member _.key (key : string, decoder : Decoder<alist<'a>>) =
+            Decoder.key key decoder
+            >> Decoded.map AList.toAVal
+            >> Decoded.flatten
+
     let decode = DecodeBuilder()
 
     let (?) decode path = Decoder.key path decode
@@ -685,9 +791,26 @@ module ExampleEncode =
 module ExampleDecode =
     open ADecode
 
-    let decode = decode {
-        let! asdf = Decoder.key "name" Decoder.constant'<string>
-        return asdf
+    module Things =
+        let decode : Decoder<Sample.Thing> = decode {
+            let! name = decode.key ("name", Decoder.value'<string>)
+            let! value = decode.key ("value", Decoder.value'<int>)
+            return {
+                name = name
+                value = value
+            }
+        }
+
+    let decode : Decoder<Sample.Model> = decode {
+        let! things = decode.key ("things", Decoder.list Things.decode)
+        let! foo = decode.key ("foo", Decoder.value'<int>)
+        let! bar = decode.key ("bar", Decoder.value'<string>)
+        return {
+            things = things
+            foo = foo
+            bar = bar
+        }
+        /// just did this, we could probably write a test now ensuring that things round trip (to an amap and back to the model?)
     }
 
 type Navigable<'model, 'msg> =

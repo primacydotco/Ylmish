@@ -16,7 +16,7 @@
         "type": "Direct",
         "requested": "[6.0.5, )",
         "resolved": "6.0.5",
-        "contentHash": "2rHXbGSO/fCuHOV90HQuBi3rLGQRXIirZR1CepSKT8dqGi9JFswaGp2M4RhHqsZNRR5aWi/Y1mnOKu8OaAwcBw=="
+        "contentHash": "FwdQVtpj34xt8vKyFUUeNIS+obWlEnSrSW7y1ivRVts/ZsrUsKyOd0bZehgFhWdnB/NBsa9DCWvNFMTO0XDFcg=="
       },
       "NETStandard.Library": {
         "type": "Direct",

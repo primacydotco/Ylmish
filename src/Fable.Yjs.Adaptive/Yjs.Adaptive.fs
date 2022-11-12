@@ -171,7 +171,7 @@ module Y =
             let initial = System.String.Concat(atext)
             let ytext = Y.Text.Create (initial)
             let mutable lock = false
-            let _ = ytext.observe (fun event tx ->
+            let _ = ytext.observe (fun event _ ->
                 console.log ("YTEXT start", lock)
                 if lock then lock <- false else
                 lock <- true

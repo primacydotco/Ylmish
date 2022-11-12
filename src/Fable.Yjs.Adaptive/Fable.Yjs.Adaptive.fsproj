@@ -11,6 +11,7 @@
     <ProjectReference Include="../Fable.Yjs/Fable.Yjs.fsproj" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FSharp/Data/Adaptive/Codec.fs" />
     <Compile Include="Yjs.Adaptive.fs" />
   </ItemGroup>
   <ItemGroup>

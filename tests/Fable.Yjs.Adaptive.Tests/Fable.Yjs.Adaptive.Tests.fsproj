@@ -1,19 +1,19 @@
 <Project Sdk="Microsoft.NET.Sdk">
-    <PropertyGroup>
-        <TargetFramework>netstandard2.0</TargetFramework>
-    </PropertyGroup>
-    <ItemGroup>
-        <Compile Include="Index.fs" />
-        <Compile Include="Y.Delta.fs" />
-        <Compile Include="Y.Text.fs" />
-        <Compile Include="Program.fs" />
-    </ItemGroup>
-    <ItemGroup>
-        <ProjectReference Include="../../src/Fable.Yjs.Adaptive/Fable.Yjs.Adaptive.fsproj" />
-    </ItemGroup>
-    <ItemGroup>
-      <PackageReference Include="Fable.Mocha" />
-
-      <PackageReference Include="FSharp.Core" />
-    </ItemGroup>
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="FSharp/Data/Adaptive/Codec.fs" />
+    <Compile Include="Index.fs" />
+    <Compile Include="Y.Delta.fs" />
+    <Compile Include="Y.Text.fs" />
+    <Compile Include="Program.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/Fable.Yjs.Adaptive/Fable.Yjs.Adaptive.fsproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Fable.Mocha" />
+    <PackageReference Include="FSharp.Core" />
+  </ItemGroup>
 </Project>

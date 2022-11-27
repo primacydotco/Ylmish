@@ -15,5 +15,6 @@
   <ItemGroup>
     <PackageReference Include="Fable.Mocha" />
     <PackageReference Include="FSharp.Core" />
+    <PackageReference Include="Hedgehog" />
   </ItemGroup>
 </Project>

@@ -2,8 +2,8 @@ module FSharp.Data.Adaptive.Codec
 
 open Fable.Mocha
 open FSharp.Data.Adaptive
-
 open FSharp.Data.Adaptive.Codec
+open Hedgehog
 
 module private Example =
 
@@ -12,6 +12,16 @@ module private Example =
         {
             name  : string
             value : int
+        }
+
+    module Thing =
+        let gen = gen {
+            let! name = Gen.string (Range.linear 0 255) Gen.alphaNum
+            let! value = Gen.int32 (Range.linearBounded ())
+            return {
+                name = name
+                value = value
+            }
         }
 
     // [<ModelType>]
@@ -99,6 +109,15 @@ module private Example =
         }
 
 
+module private Decode =
+    let inline force decoder encoded =
+        Decode.run decoder encoded
+        |> Decoded.mapError Error.printAll
+        |> AVal.force
+        |> function
+        | Ok value -> value
+        | Error e -> invalidOp e
+
 let tests = testList "FSharp.Data.Adaptive.Codec" [
     test "roundtrips" {
         let example : Example.Thing = {
@@ -109,13 +128,25 @@ let tests = testList "FSharp.Data.Adaptive.Codec" [
             example
             |> Example.AdaptiveThing
             |> Example.Codec.Things.encode
-            |> Decode.run Example.Codec.Things.decode
-            |> Decoded.mapError Error.printAll
-            |> AVal.force
-            |> function
-            | Ok value -> value
-            | Error e -> invalidOp e
+            |> Decode.force Example.Codec.Things.decode
 
         Expect.equal actual example ""
+    }
+    testCase "idk" <| fun _ -> Property.check <| property {
+        let! model = Example.Thing.gen |> Gen.map Example.AdaptiveThing
+        let model' =
+            model
+            |> Example.Codec.Things.encode
+            |> Decode.run Example.Codec.Things.decode
+            |> Decoded.mapError Error.printAll
+            |> AVal.map (function
+            | Ok r -> r
+            | Error e -> invalidOp e)
+        
+        let value1 = AVal.force model'
+        let value2 = AVal.force model.Current
+
+        Expect.equal value1 value2 ""
+        // do this https://github.com/hedgehogqa/fsharp-hedgehog/pull/196/files#diff-6203087c4a62052414dbe7e20c77af63ede65fc3ec4815c473c3c5ea8781cccc
     }
 ]

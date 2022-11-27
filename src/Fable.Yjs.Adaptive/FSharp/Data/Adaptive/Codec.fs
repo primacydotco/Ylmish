@@ -6,16 +6,16 @@ type Validation<'Ok, 'Error> = Result<'Ok, 'Error list>
 [<RequireQualifiedAccess>]
 module internal Validation =
 
-    let inline ok (value: 'ok) : Validation<'ok, 'error> =
+    let ok (value: 'ok) : Validation<'ok, 'error> =
         Ok value
 
-    let inline error (error: 'error) : Validation<'ok, 'error> =
+    let error (error: 'error) : Validation<'ok, 'error> =
         Error [ error ]
 
-    let inline errors (errors: 'error list) : Validation<'ok, 'error> =
+    let errors (errors: 'error list) : Validation<'ok, 'error> =
         Error errors
 
-    let inline ofResult (result: Result<'ok, 'error>) : Validation<'ok, 'error> =
+    let ofResult (result: Result<'ok, 'error>) : Validation<'ok, 'error> =
         Result.mapError List.singleton result
 
     let inline apply
@@ -166,18 +166,19 @@ module Encode =
 // what could/would the application do with it? get the intial value and then complain on subsequent changes
 
 module Decoded =
-    let inline ofValidation c : Decoded<'a> = AVal.constant c
-    let inline ok c : Decoded<'a> = ofValidation <| Validation.ok c
-    let inline error e : Decoded<'a> = ofValidation <| Validation.error e
-    let inline errors e : Decoded<'a> = ofValidation <| Validation.errors e
+    let ofValidation (c : Validation<'a, Error>) : Decoded<'a> = AVal.constant c
+    let ok (c : 'a) : Decoded<'a> = ofValidation <| Validation.ok c
+    let inline error (e : Error) : Decoded<'a> = ofValidation <| Validation.error e
+    let errors (e : Error list) : Decoded<'a> = ofValidation <| Validation.errors e
+    let value (a : Decoded<'a>) = AVal.force a
 
-    let inline map (f : 'a -> 'b) (a : Decoded<'a>) :  Decoded<'b> =
+    let map (f : 'a -> 'b) (a : Decoded<'a>) :  Decoded<'b> =
         AVal.map (Validation.map f) a
 
-    let inline mapError f =
+    let mapError f =
         AVal.map (Result.mapError f)
 
-    let inline bind (f : 'a -> Decoded<'b>) (a : Decoded<'a>) : Decoded<'b> =
+    let bind (f : 'a -> Decoded<'b>) (a : Decoded<'a>) : Decoded<'b> =
         AVal.bind (function Ok v -> f v | Error e -> errors e) a
 
     let traversei (f : int -> 'a -> Decoded<'b>) (source : 'a alist) : Decoded<'b alist> =
@@ -212,15 +213,15 @@ module Decoded =
 
 module Decode = 
     /// Lift a Validation<'a, Failure> to a Decoder<'a>.
-    let inline ofValidation (result : Validation<'Result, Error>) : Decoder<_,'Result> =
+    let ofValidation (result : Validation<'Result, Error>) : Decoder<_,'Result> =
         fun _ -> Decoded.ofValidation result
 
     /// Creates a Decoder<'a> from an 'a.
-    let inline ok c : Decoder<_,_> =
+    let ok c : Decoder<_,_> =
         fun _ -> Decoded.ok c
 
     /// Creates a Decoder<_> from an error.
-    let inline error e : Decoder<_,_> =
+    let error e : Decoder<_,_> =
         fun _ -> Decoded.error e
 
     let map (f : 'a -> 'b) (a : Decoder<'a>) : Decoder<'b> =

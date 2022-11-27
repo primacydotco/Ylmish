@@ -28,7 +28,7 @@ let private toIndexListDelta list =
 
 // Test cases from https://docs.yjs.dev/api/delta-format
 // https://quilljs.com/docs/delta/#playground
-let tests = testList "Y.Delta" [
+let tests = testList "Y.Delta" [ ]
     // test "toAdaptive ins 'abc'" {
     //     let input = ResizeArray [
     //         Y.Delta.Insert "abc"
@@ -153,4 +153,4 @@ let tests = testList "Y.Delta" [
     //         Y.Delta.Delete 2
     //     ] ""
     // }
-]
+// ]

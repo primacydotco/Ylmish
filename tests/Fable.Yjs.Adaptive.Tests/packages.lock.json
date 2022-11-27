@@ -18,6 +18,15 @@
         "resolved": "6.0.5",
         "contentHash": "FwdQVtpj34xt8vKyFUUeNIS+obWlEnSrSW7y1ivRVts/ZsrUsKyOd0bZehgFhWdnB/NBsa9DCWvNFMTO0XDFcg=="
       },
+      "Hedgehog": {
+        "type": "Direct",
+        "requested": "[0.13.0, )",
+        "resolved": "0.13.0",
+        "contentHash": "R0QARj4V33FkqHP3f9LOUkPacq2DjpwG+BMMVfHEnJ06kVg/bL5gPccu960SrQgZGfEfoIbcGZ9oFD5oZo+raQ==",
+        "dependencies": {
+          "FSharp.Core": "[4.3.4, 99.0.0]"
+        }
+      },
       "NETStandard.Library": {
         "type": "Direct",
         "requested": "[2.0.3, )",

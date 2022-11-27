@@ -718,7 +718,7 @@ module Types =
             abstract entries: unit -> IterableIterator<(string * obj option)>
             /// <summary>Executes a provided function on once on every key-value pair.</summary>
             /// <param name="f">A function to execute on every element of this YArray.</param>
-            abstract forEach: f: ('MapType -> string -> YMap<'MapType> -> unit) -> YMapForEachReturn
+            abstract forEach: f: ('MapType -> string -> YMap<'MapType> -> unit) -> YMapForEachReturn<'MapType>
             /// <summary>Remove a specified element from this YMap.</summary>
             /// <param name="key">The key of the element to remove.</param>
             abstract delete: key: string -> unit
@@ -739,7 +739,7 @@ module Types =
         type [<AllowNullLiteral>] YMapToJSONReturn =
             [<Emit "$0[$1]{{=$2}}">] abstract Item: x: string -> obj option with get, set
 
-        type [<AllowNullLiteral>] YMapForEachReturn =
+        type [<AllowNullLiteral>] YMapForEachReturn<'MapType> =
             [<Emit "$0[$1]{{=$2}}">] abstract Item: x: string -> 'MapType with get, set
 
         type [<AllowNullLiteral>] YMapStatic =

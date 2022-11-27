@@ -157,14 +157,6 @@ module Encode =
     let map f a =
         a |> AMap.map f |> Element.Map
 
-
-
-/// the outer aval represents the encoding itself changing
-/// which could happen if another client upgrades and publishes its changes
-
-// this would mean the decoding would have to return an aval.
-// what could/would the application do with it? get the intial value and then complain on subsequent changes
-
 module Decoded =
     let inline ofValidation (c : Validation<'a, Error>) : Decoded<'a> = AVal.constant c
     let inline ok (c : 'a) : Decoded<'a> = ofValidation <| Validation.ok c

@@ -85,24 +85,24 @@
       "fable.yjs": {
         "type": "Project",
         "dependencies": {
-          "FSharp.Core": "6.0.5",
-          "Fable.Browser.Dom": "2.10.0",
-          "Fable.Core": "3.7.0"
+          "FSharp.Core": "[6.0.5, )",
+          "Fable.Browser.Dom": "[2.10.1, )",
+          "Fable.Core": "[4.0.0-theta-007, )"
         }
       },
       "fable.yjs.adaptive": {
         "type": "Project",
         "dependencies": {
-          "FSharp.Core": "6.0.5",
-          "FSharp.Data.Adaptive": "1.2.13",
-          "Fable.Yjs": "1.0.0"
+          "FSharp.Core": "[6.0.5, )",
+          "FSharp.Data.Adaptive": "[1.2.13, )",
+          "Fable.Yjs": "[1.0.0, )"
         }
       },
       "Fable.Browser.Dom": {
         "type": "CentralTransitive",
-        "requested": "[2.10.0, )",
-        "resolved": "2.10.0",
-        "contentHash": "DGbAzVcWYTfiYoShbbMpd75BpngbIFTjHeMoFPCtRGKORUMg11TLKiXoCxbwyjrCuXDKPNSlKjio1i66WgNGgA==",
+        "requested": "[2.10.1, )",
+        "resolved": "2.10.1",
+        "contentHash": "G1Ul9D3suwBPUxEw0hwclZzDxDk/hLkwAZytgAoxHmv4uGth9Zpi9Fz4gm6C8v6W87qvhcM8lrCpg1awPeATyg==",
         "dependencies": {
           "FSharp.Core": "4.7.2",
           "Fable.Browser.Blob": "1.2.0",
@@ -113,9 +113,9 @@
       },
       "Fable.Core": {
         "type": "CentralTransitive",
-        "requested": "[3.7.0, )",
-        "resolved": "3.7.0",
-        "contentHash": "T+67w7XUaqHp2Lm9ESvrPoy7MrCFOYpUg6ASX4F+E1XDDnH+ElW2t1Jt+FjahRZZk6cS14i8JACte57P32FW9Q=="
+        "requested": "[4.0.0-theta-007, )",
+        "resolved": "4.0.0-theta-007",
+        "contentHash": "9nDQRQfhz6/NjoXLBMqixCjRYvx8jgHAuGjJow4W0vHoFWNauPhTex+psQsw9FRRuQF2AhIwuhHoh9Tb8JoCfw=="
       },
       "FSharp.Data.Adaptive": {
         "type": "CentralTransitive",

@@ -6,16 +6,16 @@ type Validation<'Ok, 'Error> = Result<'Ok, 'Error list>
 [<RequireQualifiedAccess>]
 module internal Validation =
 
-    let ok (value: 'ok) : Validation<'ok, 'error> =
+    let inline ok (value: 'ok) : Validation<'ok, 'error> =
         Ok value
 
-    let error (error: 'error) : Validation<'ok, 'error> =
+    let inline error (error: 'error) : Validation<'ok, 'error> =
         Error [ error ]
 
-    let errors (errors: 'error list) : Validation<'ok, 'error> =
+    let inline errors (errors: 'error list) : Validation<'ok, 'error> =
         Error errors
 
-    let ofResult (result: Result<'ok, 'error>) : Validation<'ok, 'error> =
+    let inline ofResult (result: Result<'ok, 'error>) : Validation<'ok, 'error> =
         Result.mapError List.singleton result
 
     let inline apply
@@ -166,19 +166,19 @@ module Encode =
 // what could/would the application do with it? get the intial value and then complain on subsequent changes
 
 module Decoded =
-    let ofValidation (c : Validation<'a, Error>) : Decoded<'a> = AVal.constant c
-    let ok (c : 'a) : Decoded<'a> = ofValidation <| Validation.ok c
+    let inline ofValidation (c : Validation<'a, Error>) : Decoded<'a> = AVal.constant c
+    let inline ok (c : 'a) : Decoded<'a> = ofValidation <| Validation.ok c
     let inline error (e : Error) : Decoded<'a> = ofValidation <| Validation.error e
-    let errors (e : Error list) : Decoded<'a> = ofValidation <| Validation.errors e
-    let value (a : Decoded<'a>) = AVal.force a
+    let inline errors (e : Error list) : Decoded<'a> = ofValidation <| Validation.errors e
+    let inline value (a : Decoded<'a>) = AVal.force a
 
-    let map (f : 'a -> 'b) (a : Decoded<'a>) :  Decoded<'b> =
+    let inline map (f : 'a -> 'b) (a : Decoded<'a>) :  Decoded<'b> =
         AVal.map (Validation.map f) a
 
-    let mapError f =
+    let inline mapError f =
         AVal.map (Result.mapError f)
 
-    let bind (f : 'a -> Decoded<'b>) (a : Decoded<'a>) : Decoded<'b> =
+    let inline bind (f : 'a -> Decoded<'b>) (a : Decoded<'a>) : Decoded<'b> =
         AVal.bind (function Ok v -> f v | Error e -> errors e) a
 
     let traversei (f : int -> 'a -> Decoded<'b>) (source : 'a alist) : Decoded<'b alist> =

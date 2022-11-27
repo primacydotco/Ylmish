@@ -7,7 +7,6 @@
     "install": "dotnet restore",
     "build:yjs": "dotnet fable src/Fable.Yjs -o build/src/Fable.Yjs",
     "build:yjs-adaptive": "dotnet fable src/Fable.Yjs.Adaptive -o build/src/Fable.Yjs.Adaptive",
-    "testidk": "dotnet fable src/Fable.Yjs.Adaptive -o build/tests/Fable.Yjs.Adaptive.Tests --nocache",
     "test+watch": "dotnet fable watch tests/Fable.Yjs.Adaptive.Tests -o build/tests/Fable.Yjs.Adaptive.Tests --run mocha build/tests/Fable.Yjs.Adaptive.Tests/Program.js --watch --parallel"
   },
   "keywords": [],

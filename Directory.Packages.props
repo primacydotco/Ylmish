@@ -1,6 +1,8 @@
 <Project>
   <ItemGroup>
     <PackageVersion Include="Elmish" Version="3.1.0" />
+
+    <PackageVersion Include="Expecto" Version="9.0.4" />
     
     <PackageVersion Include="Fable.Browser.Dom" Version="2.10.1" />
     <PackageVersion Include="Fable.Core" Version="4.0.0-theta-007" />
@@ -10,5 +12,9 @@
     <PackageVersion Include="FSharp.Data.Adaptive" Version="1.2.13" />
 
     <PackageVersion Include="Hedgehog" Version="0.13.0" />
+
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.4.1" />
+    
+    <PackageVersion Include="YoloDev.Expecto.TestSdk" Version="0.13.3" />
   </ItemGroup>
 </Project>

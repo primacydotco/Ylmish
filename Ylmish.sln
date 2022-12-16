@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{2A69D5AF-F713-4968-9403-8953450C8BD0}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Ylmish.Adaptive", "src\Ylmish.Adaptive\Ylmish.Adaptive.fsproj", "{61625C6A-38E2-447D-867C-63AD7F9D02C9}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{AC09B653-3BA2-4D37-9943-1808FA52D8C5}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Ylmish.Adaptive.Tests", "tests\Ylmish.Adaptive.Tests\Ylmish.Adaptive.Tests.fsproj", "{F40AF597-C343-4452-B247-41F7ADA91684}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{61625C6A-38E2-447D-867C-63AD7F9D02C9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{61625C6A-38E2-447D-867C-63AD7F9D02C9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{61625C6A-38E2-447D-867C-63AD7F9D02C9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{61625C6A-38E2-447D-867C-63AD7F9D02C9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F40AF597-C343-4452-B247-41F7ADA91684}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F40AF597-C343-4452-B247-41F7ADA91684}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F40AF597-C343-4452-B247-41F7ADA91684}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F40AF597-C343-4452-B247-41F7ADA91684}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{61625C6A-38E2-447D-867C-63AD7F9D02C9} = {2A69D5AF-F713-4968-9403-8953450C8BD0}
+		{F40AF597-C343-4452-B247-41F7ADA91684} = {AC09B653-3BA2-4D37-9943-1808FA52D8C5}
+	EndGlobalSection
+EndGlobal

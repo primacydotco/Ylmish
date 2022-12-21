@@ -8,13 +8,13 @@ Here lie libraries for integrating [Yjs](https://github.com/yjs/yjs) and [Elmish
 > 
 > I want (select) changes to an Elmish model to propagate to a Yjs document, and changes to a Yjs document to reflect in the Elmish model.
 
-
-
 ## Background
 
-### Data and flow
+### Data and communication
 
-Changes need to flow bi-directionally. That is, any changes made to **state data**, in Yjs, need to be made to **app data**, in Elmish, and (some) changes made to app data (such as through interactions with the app) need to be made to state data.
+Our **app data** describes what is in memory while our app is running. Our **state data** describes what is persisted in browser storage and synchronized with peers.
+
+Changes need to be communicated bi-directionally. That is, any changes made to **state data**, in Yjs, need to be made to **app data**, in Elmish, and (some) changes made to app data (such as through interactions with the app) need to be made to state data.
 
 If we were to observe a running [**Elmish** loop](https://elmish.github.io/elmish/#dispatch-loop), we wouldn't see the operations being applied to the app's model. They're opaque to an observer because they're inside the `update` functions. Instead, we only have access to each successive `'model`, that is, the consequence of operations.
 
@@ -24,9 +24,7 @@ If we observe a **Yjs** document, we'd see all of the operations that occur and 
 
 > For example, a Yjs `Y.Array` and an interaction may add two items to that array and from the outside, we can observe two add operations. (And we can combine all the operations to see the 'current' state of the array.)
 
-**Design**
-
-We need to bridge these two worlds, that is, we need to be able to go from our changes represented as success models to our changes represented as the operations themselves.
+We need to bridge these two worlds, that is, we need to be able to go from our changes represented as successive models to our changes represented as the operations themselves.
 
 ```
 'model -> 'model -> 'operations
@@ -36,19 +34,30 @@ We need to bridge these two worlds, that is, we need to be able to go from our c
 
 ['Incremental computation'](https://github.com/fsprojects/Fabulous/issues/258#issue-391515540) has already been used where people want to build apps that use immutable data structures but performantly update a mutable DOM. Part of this work has been to [efficiently](https://github.com/fsharp/fslang-suggestions/issues/768) diff two models.
 
-This led to [FSharp.Data.Adaptive](https://github.com/fsprojects/FSharp.Data.Adaptive), an fsharp implementation of incremental computing and our choice to bridge these two worlds.
+**Design**
+
+We bridge Elmish and Yjs through an intermediate, incremental model using [FSharp.Data.Adaptive](https://github.com/fsprojects/FSharp.Data.Adaptive) (an fsharp implementation of incremental computing) and [Adaptify](https://github.com/krauthaufen/Adaptify) (to incrementalize an existing Elmish model). 
+
+Successive Elmish models are used to update the incremental model. The (calculated) changes to the incremental model are observed and (the deltas) are applied to the Yjs document.
 
 ```
-┌─Elmish─┐    ┌─Adaptive──────┐    ┌─Yjs───┐
-│        │ -> │               │ -> │       │
-│ Model  │    │ AdaptiveModel │    │ Y.Doc │
-│        │ <- │               | <- │       │
-└────────┘    └───────────────┘    └───────┘
+┌─Elmish─┐         ┌─Adaptive─────────┐         ┌─Yjs───┐
+│        │ --[1]-> │                  │ --[2]-> │       │
+│ Model  │         │ IncrementalModel │         │ Y.Doc │
+│        │ <-[4]-- │                  | <-[3]-- │       │
+└────────┘         └──────────────────┘         └───────┘
+App data                                    State data
+
+Using Ylmish.Program.withYlmish:
+[1] Successive Elmish models are used to update the incremental model.
+[2] Changes to the incremental model are observed and (the deltas) are applied to the Yjs document.
+[3] Changes to the Yjs document are observed and the deltas are applied to the incremental model
+[4] Changes to the incremental model are observed and a updated Elmish model is set for each.
 ```
 
 ### Schema and codec
 
-Our **app schema** describes the structure of our app data, that is, what is in memory while our app is running. Our **state schema** describes our state data, that is, what is persisted in browser storage and synchronized with peers via the app's companion.
+Our **app schema** describes the structure of our app data, that is, what is in memory while our app is running. Our **state schema** describes the structure of our state data, that is, what is persisted in browser storage and synchronized with peers via the app's companion.
 
 Our state schema _must_ be decoupled from our app schema because:
 
@@ -61,15 +70,19 @@ If we have this decoupling, we need an explicit description of how our app schem
 
 **Design**
 
+We provide `Ylmish.Adaptive.Codec` for writing encoders and decoders. 
+
 ```
-┌─Elmish─┐    ┌─Adaptive────────────────────────────┐    ┌─Yjs───┐
-│        │ -> │ AdaptiveModel -> AMap<string, AVal> │ -> │       │
-│ Model  │    │                                     │    │ Y.Doc │
-│        │ <- │ AVal<Model>   <- AMap<string, AVal> | <- │       │
-└────────┘    └─────────────────────────────────────┘    └───────┘
-App schema    App schema shape   State schema shape    State schema
-              └─────────────────────────────────────┘
-                             codec
+┌─Adaptive─────────────────────────────────┐
+│ AdaptiveModel --[1]-> AMap<string, AVal> │
+│                                          │
+│ AVal<Model>   <-[2]-- AMap<string, AVal> |
+└──────────────────────────────────────────┘
+App schema                      State schema
+
+Using Ylmish.Adaptive.Codec:
+[1] .Encoder
+[2] .Decoder
 ```
 
 
@@ -88,3 +101,4 @@ App schema    App schema shape   State schema shape    State schema
    | Object of obj
    ```
    https://github.com/fable-compiler/Fable/issues/2492
+1. Investigate supporting [Ycs](https://github.com/yjs/ycs) or [Yrs](https://github.com/y-crdt/y-crdt (with a FFI binding) (in addition to [Yjs](https://github.com/yjs/yjs) (./src/Fable.Yjs)).

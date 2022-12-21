@@ -126,7 +126,7 @@ module private Decode =
         | Ok value -> value
         | Error e -> invalidOp e
 
-let tests = testList "FSharp.Data.Adaptive.Codec" [
+let tests = testList "Ylmish.Adaptive.Codec" [
     test "roundtrips" {
         let example : Example.Thing = {
             name = "Example Thing"
@@ -148,7 +148,7 @@ let tests = testList "FSharp.Data.Adaptive.Codec" [
             let _ = AVal.force model.Current
             ()
     }
-    testCase "Decoded.traversei" <| fun _ -> Property.check <| property {
+    testCase "Decoded_traversei" <| fun _ -> Property.check <| property {
         let! items =
             Example.Thing.gen
             |> Gen.list (Range.linear 0 10)

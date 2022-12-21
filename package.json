@@ -4,10 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "install": "dotnet restore",
-    "build:yjs": "dotnet fable src/Fable.Yjs -o build/src/Fable.Yjs",
-    "build:yjs-adaptive": "dotnet fable src/Fable.Yjs.Adaptive -o build/src/Fable.Yjs.Adaptive",
-    "test+watch": "dotnet fable watch tests/Fable.Yjs.Adaptive.Tests -o build/tests/Fable.Yjs.Adaptive.Tests --run mocha build/tests/Fable.Yjs.Adaptive.Tests/Program.js --watch --parallel"
+    "install": "dotnet restore && dotnet tool restore",
+    "test+watch:ylmish": "dotnet fable watch tests/Ylmish.Tests -o build/tests/Ylmish.Tests --run mocha build/tests/Ylmish.Tests/Ylmish.Tests.js --watch --parallel",
+    "test+watch:ylmish-adaptive": "dotnet fable watch tests/Ylmish.Adaptive.Tests -o build/tests/Ylmish.Adaptive.Tests --run mocha build/tests/Ylmish.Adaptive.Tests/Ylmish.Adaptive.Tests.js --watch --parallel"
   },
   "keywords": [],
   "author": "",

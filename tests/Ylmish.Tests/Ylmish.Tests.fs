@@ -1,7 +1,9 @@
-module Ylmish.Adaptive.Program
+open Ylmish
 
 let tests = [
-   Codec.tests
+   Adaptive.Index.tests
+   Y.Delta.tests
+   Y.Text.tests
 ]
 
 #if FABLE_COMPILER
@@ -11,7 +13,7 @@ let all = testList "" tests
 
 [<EntryPoint>]
 let main args =
-    runTests all
+    Mocha.runTests all
 
 #else
 open Expecto
@@ -21,6 +23,7 @@ let all = testList "" tests
 
 [<EntryPoint>]
 let main args =
+    raise <| System.NotImplementedException "Ylmish tests depend on Yjs and can only be run with JS, not dotnet."
     runTestsWithArgs defaultConfig args all
 
 #endif

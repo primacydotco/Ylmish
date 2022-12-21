@@ -9,6 +9,7 @@ Here lie libraries for integrating [Yjs](https://github.com/yjs/yjs) and [Elmish
 > I want (select) changes to an Elmish model to propagate to a Yjs document, and changes to a Yjs document to reflect in the Elmish model.
 
 
+
 ## Background
 
 ### Data and flow
@@ -70,6 +71,7 @@ App schema    App schema shape   State schema shape    State schema
               └─────────────────────────────────────┘
                              codec
 ```
+
 
 ## TODO
 

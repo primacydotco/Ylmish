@@ -1,19 +1,20 @@
-module Yjs.Adaptive.Index
+module Ylmish.Adaptive.Index
 
-open Fable.Core.JS
-open Fable.Core.JsInterop
-open Fable.Core.Testing
-open Fable.Mocha
 open FSharp.Data.Adaptive
-open Yjs
 
-open Yjs.Adaptive
+open Ylmish.Adaptive
 
-let tests = testList "Index" [
-    test "generate Index.zero 0" {
+#if FABLE_COMPILER
+open Fable.Mocha
+#else
+open Expecto
+#endif
+
+let tests = testList "Adaptive.Index" [
+    test "generate Index_zero 0" {
         Expect.equal (Index.generate (fun _ j -> j) Index.zero 0) [ Index.zero ] ""
     }
-    test "generate Index.zero 3" {
+    test "generate Index_zero 3" {
         Expect.equal (Index.generate (fun _ j -> j) Index.zero 3) [
             Index.zero
             Index.after (Index.zero)
@@ -37,7 +38,7 @@ let tests = testList "Index" [
             Index.after(Index.after(Index.after(Index.zero)))
         ) ""
     }
-    test "at 0 equals IndexList.tryFind" {
+    test "at 0 equals IndexList_tryFind" {
         let ls = IndexList.ofList [ 'a'; 'b'; 'c' ]
         Expect.equal (ls.[0]) 'a' ""
         Expect.equal (ls.TryFind 'a' |> Option.get) (Index.after Index.zero) ""

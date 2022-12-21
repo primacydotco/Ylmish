@@ -1,22 +1,102 @@
-module Yjs.Adaptive.Elmish
+[<RequireQualifiedAccess>]
+module Ylmish.Program
 
-module Codec = 
-    open Yjs
+open Elmish
 
-    let (|Text|_|) (obj : obj) =
-        if typeof<Y.Text>.IsInstanceOfType(obj)
-        then Some (obj :?> Y.Text)
-        else None
+open Ylmish.Adaptive
 
-    let (|Value|_|) (obj : obj) =
-        if typeof<Y.AbstractType>.IsInstanceOfType(obj)
-        then Some (obj :?> Y.AbstractType)
-        else None
+// module Unpersist =
+    
+//     let create (init : 'T -> 'AdaptiveT) (update : 'AdaptiveT -> 'T -> unit) = 
+//         Adaptify.Unpersist.create init update
 
-    let (|Map|_|) (obj : obj) =
-        if typeof<Y.Map<obj>>.IsInstanceOfType(obj)
-        then Some (obj :?> Y.Map<obj>)
-        else None
+//     [<GeneralizableValue>]
+//     let aval<'T> = Adaptify.Unpersist.aval<'T>
+        
+//     [<GeneralizableValue>]
+//     let aset<'T> = Adaptify.Unpersist.aset<'T>
+        
+//     [<GeneralizableValue>]
+//     let alist<'T> = Adaptify.Unpersist.alist<'T>
+
+//     [<GeneralizableValue>]
+//     let amap<'K, 'V> = Adaptify.Unpersist.amap<'K, 'V>
+
+//     let inline instance< ^T, ^AdaptiveT when (^T or ^AdaptiveT) : (static member Unpersist : Unpersist< ^T, ^AdaptiveT >) > =
+//         ((^T or ^AdaptiveT) : (static member Unpersist : Unpersist< ^T, ^AdaptiveT >) ())
+
+type AdaptiveFactory<'model, 'amodel> = private {
+    Create : 'model -> 'amodel
+    Update : 'amodel -> 'model -> 'amodel
+}
+
+// let inline unpersist< ^model, ^amodel
+//     when ^amodel: (static member Create : ^model -> ^amodel)
+//     and  ^amodel: (static member Update : ^amodel -> ^model -> ^amodel)
+// > = {
+//     Create = fun model -> (^amodel : (static member Create: ^model -> ^amodel) model)
+//     Update = fun model next -> (^amodel : (static member Update : ^amodel -> ^model -> ^amodel) (model, next))
+// }
+
+type Message<'model, 'msg> =
+    private
+    | Set of 'model
+    | UserMsg of 'msg
+
+
+let toYlmish<'model, 'amodel> (factory : AdaptiveFactory<'model, 'amodel>) (program : Program<'a,'model,'msg,'view>) =
+    let mutable amodel : 'amodel = Unchecked.defaultof<_>
+
+    let update userUpdate msg model =
+        match msg with
+        | Set m ->
+            amodel <- factory.Update amodel m
+            m, Cmd.none
+        | UserMsg userMsg ->
+            let m, c = userUpdate userMsg model
+            let c = c |> Cmd.map UserMsg
+            amodel <- factory.Update amodel m
+            m, c
+
+    let subs userSubscribe model =
+        Cmd.batch [
+            userSubscribe model |> Cmd.map UserMsg 
+        ]
+
+    let init userInit () =
+        let m, c = userInit ()
+        do amodel <- factory.Create m
+        let c = c |> Cmd.map UserMsg
+        m, c
+
+    let setState userSetState model dispatch =
+        userSetState model (UserMsg >> dispatch)
+
+    let view userView model dispatch =
+        userView model (UserMsg >> dispatch)
+    
+    program
+    |> Program.map init update view setState subs
+
+// module Yjs.Adaptive.Elmish
+
+// module Codec = 
+//     open Yjs
+
+//     let (|Text|_|) (obj : obj) =
+//         if typeof<Y.Text>.IsInstanceOfType(obj)
+//         then Some (obj :?> Y.Text)
+//         else None
+
+//     let (|Value|_|) (obj : obj) =
+//         if typeof<Y.AbstractType>.IsInstanceOfType(obj)
+//         then Some (obj :?> Y.AbstractType)
+//         else None
+
+//     let (|Map|_|) (obj : obj) =
+//         if typeof<Y.Map<obj>>.IsInstanceOfType(obj)
+//         then Some (obj :?> Y.Map<obj>)
+//         else None
 
 // // Encode should go from an aval -> yval
 // module Encode =
@@ -327,44 +407,3 @@ module Codec =
 // //         }
 
 
-// type Navigable<'model, 'msg> =
-//     | Set of 'model
-//     | UserMsg of 'msg
-
-// module Program =
-//     open Elmish 
-
-
-//     let toStateful (program : Program<'a,Sample.Model,'msg,'view>) =
-//         let mutable amodel : Sample.AdaptiveModel = Unchecked.defaultof<_>
-
-//         let update userUpdate msg model =
-//             match msg with
-//             | Set m ->
-//                 do amodel.Update m
-//                 m, Cmd.none
-//             | UserMsg userMsg ->
-//                 let m, c = userUpdate userMsg model
-//                 let c = c |> Cmd.map UserMsg
-//                 do amodel.Update m
-//                 m, c
-
-//         let subs userSubscribe model =
-//             Cmd.batch [
-//                 userSubscribe model |> Cmd.map UserMsg 
-//             ]
-
-//         let init userInit () =
-//             let m, c = userInit ()
-//             do amodel <- Sample.AdaptiveModel.Create m
-//             let c = c |> Cmd.map UserMsg
-//             m, c
-
-//         let setState userSetState model dispatch =
-//             userSetState model (UserMsg >> dispatch)
-
-//         let view userView model dispatch =
-//             userView model (UserMsg >> dispatch)
-        
-//         program
-//         |> Program.map init update view setState subs

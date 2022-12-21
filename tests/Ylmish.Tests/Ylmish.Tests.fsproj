@@ -1,14 +1,16 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
-    <GenerateProgramFile>false</GenerateProgramFile>
+	<TargetFramework>net7.0</TargetFramework>
+	<GenerateProgramFile>false</GenerateProgramFile>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Codec.fs" />
-    <Compile Include="Ylmish.Adaptive.Tests.fs" />
+    <Compile Include="Adaptive.Index.fs" />
+    <Compile Include="Y.Delta.fs" />
+    <Compile Include="Y.Text.fs" />
+    <Compile Include="Ylmish.Tests.fs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="../../src/Ylmish.Adaptive/Ylmish.Adaptive.fsproj" />
+    <ProjectReference Include="../../src/Ylmish/Ylmish.fsproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Expecto" />

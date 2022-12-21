@@ -6,3 +6,6 @@ obj/
 node_modules/
 dist/
 build/
+
+# Visual Studio
+.vs/

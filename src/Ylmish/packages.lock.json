@@ -17,6 +17,16 @@
         "resolved": "6.0.5",
         "contentHash": "FwdQVtpj34xt8vKyFUUeNIS+obWlEnSrSW7y1ivRVts/ZsrUsKyOd0bZehgFhWdnB/NBsa9DCWvNFMTO0XDFcg=="
       },
+      "FSharp.Data.Adaptive": {
+        "type": "Direct",
+        "requested": "[1.2.13, )",
+        "resolved": "1.2.13",
+        "contentHash": "9g1qwlyxH/ymKSK9WBGbAO7+4UGd9L4GN+uqxk0ju1mGiJTaMNYbrbKvWnhvPyDs9d2mfeS9lydwYdjtHF7pew==",
+        "dependencies": {
+          "FSharp.Core": "4.7.0",
+          "System.Reflection.Emit.Lightweight": "4.6.0"
+        }
+      },
       "NETStandard.Library": {
         "type": "Direct",
         "requested": "[2.0.3, )",
@@ -90,13 +100,6 @@
           "Fable.Core": "[4.0.0-theta-007, )"
         }
       },
-      "ylmish.adaptive": {
-        "type": "Project",
-        "dependencies": {
-          "FSharp.Core": "[6.0.5, )",
-          "FSharp.Data.Adaptive": "[1.2.13, )"
-        }
-      },
       "Fable.Browser.Dom": {
         "type": "CentralTransitive",
         "requested": "[2.10.1, )",
@@ -115,16 +118,6 @@
         "requested": "[4.0.0-theta-007, )",
         "resolved": "4.0.0-theta-007",
         "contentHash": "9nDQRQfhz6/NjoXLBMqixCjRYvx8jgHAuGjJow4W0vHoFWNauPhTex+psQsw9FRRuQF2AhIwuhHoh9Tb8JoCfw=="
-      },
-      "FSharp.Data.Adaptive": {
-        "type": "CentralTransitive",
-        "requested": "[1.2.13, )",
-        "resolved": "1.2.13",
-        "contentHash": "9g1qwlyxH/ymKSK9WBGbAO7+4UGd9L4GN+uqxk0ju1mGiJTaMNYbrbKvWnhvPyDs9d2mfeS9lydwYdjtHF7pew==",
-        "dependencies": {
-          "FSharp.Core": "4.7.0",
-          "System.Reflection.Emit.Lightweight": "4.6.0"
-        }
       }
     }
   }

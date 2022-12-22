@@ -1,9 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-	<TargetFramework>net7.0</TargetFramework>
-	<GenerateProgramFile>false</GenerateProgramFile>
+    <TargetFramework>net7.0</TargetFramework>
+    <GenerateProgramFile>false</GenerateProgramFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Adaptive.Codec.fs" />
     <Compile Include="Adaptive.Index.fs" />
     <Compile Include="Y.Delta.fs" />
     <Compile Include="Y.Text.fs" />

@@ -4,10 +4,10 @@
 
 	</PropertyGroup>
 	<ItemGroup>
-		<ProjectReference Include="../Ylmish.Adaptive/Ylmish.Adaptive.fsproj" />
 		<ProjectReference Include="../Fable.Yjs/Fable.Yjs.fsproj" />
 	</ItemGroup>
 	<ItemGroup>
+		<Compile Include="Adaptive.Codec.fs" />
 		<Compile Include="Adaptive.Index.fs" />
 		<Compile Include="Y.Delta.fs" />
 		<Compile Include="Y.Text.fs" />
@@ -15,10 +15,12 @@
 	</ItemGroup>
 	<ItemGroup>
 
-		<Content Include="*.fsproj; *.fs; *.js" Exclude="**\*.fs.js" PackagePath="fable\" Visible="false" />
+		<Content Include="*.fsproj; *.fs; *.js" Exclude="**\*.fs.js" PackagePath="fable\"
+			Visible="false" />
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="FSharp.Core" />
+		<PackageReference Include="FSharp.Data.Adaptive" />
 		<PackageReference Include="Elmish" />
 	</ItemGroup>
 </Project>

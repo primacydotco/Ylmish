@@ -89,6 +89,10 @@ Using Ylmish.Adaptive.Codec:
 ## TODO
 
 1. IndexList starts at 1 is probably why tests are failing
+1. We need get-or-insert semantics for nested Y types so our maps and arrays aren't overwritten by two clients initializing shared types.
+   We could code around this it by only using top-level maps and arrays, representing nested types by name.
+   For example, `Y.Doc.getMap('x.y.z')` to represent a map `z` inside a map `y` inside the top-level map `x`.
+   Maybe the [key-value type] will support this?(https://github.com/yjs/yjs/issues/255).
 1. Value could be erased
    ```fsharp
    [<Erase>]

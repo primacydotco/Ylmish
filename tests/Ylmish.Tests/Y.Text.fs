@@ -35,4 +35,16 @@ let tests = testList "Y.Text" [
         Expect.equal (System.String.Concat atext) "abcd" "equal"
         // Expect.equal (ytext.toString()) "abcd" "equal"
     }
+
+    test "toAdaptive, ytext_insert()" {
+        let ydoc = Y.Doc.Create ()
+        let ytext = ydoc.getText "test"
+        let _ = ytext.insert(0, "abd")
+        let atext = Y.Text.toAdaptive ytext
+
+        let _ = ytext.insert(2, "c")
+
+        Expect.equal (System.String.Concat atext) "abcd" "equal"
+
+    }
 ]

@@ -5,8 +5,7 @@
   "type": "module",
   "scripts": {
     "install": "dotnet restore && dotnet tool restore",
-    "test+watch:ylmish": "dotnet fable watch tests/Ylmish.Tests -o build/tests/Ylmish.Tests --run mocha build/tests/Ylmish.Tests/Ylmish.Tests.js --watch --parallel",
-    "test+watch:ylmish-adaptive": "dotnet fable watch tests/Ylmish.Adaptive.Tests -o build/tests/Ylmish.Adaptive.Tests --run mocha build/tests/Ylmish.Adaptive.Tests/Ylmish.Adaptive.Tests.js --watch --parallel"
+    "test+watch": "dotnet fable watch tests/Ylmish.Tests -o build/tests/Ylmish.Tests --run mocha build/tests/Ylmish.Tests/Ylmish.Tests.js --watch --parallel"
   },
   "keywords": [],
   "author": "",

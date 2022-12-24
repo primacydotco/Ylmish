@@ -2044,6 +2044,9 @@ module Y =
     module Text =
         type Event = Types.YText.YTextEvent
 
+    module Array =
+        type Event<'a> = Types.YArray.YArrayEvent<'a>
+
 
     
 // Exported members

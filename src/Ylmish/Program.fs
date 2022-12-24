@@ -2,8 +2,9 @@
 module Ylmish.Program
 
 open Elmish
+open Yjs
 
-open Ylmish.Adaptive
+open Ylmish.Adaptive.Codec
 
 // module Unpersist =
     
@@ -25,9 +26,12 @@ open Ylmish.Adaptive
 //     let inline instance< ^T, ^AdaptiveT when (^T or ^AdaptiveT) : (static member Unpersist : Unpersist< ^T, ^AdaptiveT >) > =
 //         ((^T or ^AdaptiveT) : (static member Unpersist : Unpersist< ^T, ^AdaptiveT >) ())
 
-type AdaptiveFactory<'model, 'amodel> = private {
+type YlmishOptions<'model, 'amodel> = private {
     Create : 'model -> 'amodel
     Update : 'amodel -> 'model -> 'amodel
+    Encode : Encoder<'amodel>
+    Decode : Decoder<'amodel>
+    Doc : Y.Doc
 }
 
 // let inline unpersist< ^model, ^amodel
@@ -38,42 +42,50 @@ type AdaptiveFactory<'model, 'amodel> = private {
 //     Update = fun model next -> (^amodel : (static member Update : ^amodel -> ^model -> ^amodel) (model, next))
 // }
 
+
+//let connect (amodel : 'amodel) (ydoc : Y.Doc) (encode : Encoder<'amodel>) (decode : Decoder<'amodel>) =
+//    match encode amodel with
+//    | Element.Map amap ->
+//        let ymap = Y.Map.ofAdaptive amap
+//    ()
+
 type Message<'model, 'msg> =
     private
     | Set of 'model
-    | UserMsg of 'msg
+    | User of 'msg
 
 
-let toYlmish<'model, 'amodel> (factory : AdaptiveFactory<'model, 'amodel>) (program : Program<'a,'model,'msg,'view>) =
+let toYlmish<'model, 'amodel> (options : YlmishOptions<'model, 'amodel>) (program : Program<'a,'model,'msg,'view>) =
     let mutable amodel : 'amodel = Unchecked.defaultof<_>
 
     let update userUpdate msg model =
         match msg with
         | Set m ->
-            amodel <- factory.Update amodel m
+            amodel <- options.Update amodel m
             m, Cmd.none
-        | UserMsg userMsg ->
+        | User userMsg ->
             let m, c = userUpdate userMsg model
-            let c = c |> Cmd.map UserMsg
-            amodel <- factory.Update amodel m
+            let c = c |> Cmd.map User
+            amodel <- options.Update amodel m
             m, c
 
     let subs userSubscribe model =
         Cmd.batch [
-            userSubscribe model |> Cmd.map UserMsg 
+            userSubscribe model |> Cmd.map User 
         ]
 
     let init userInit () =
         let m, c = userInit ()
-        do amodel <- factory.Create m
-        let c = c |> Cmd.map UserMsg
+        do amodel <- options.Create m
+        let asdf = options.Encode amodel
+        let c = c |> Cmd.map User
         m, c
 
     let setState userSetState model dispatch =
-        userSetState model (UserMsg >> dispatch)
+        userSetState model (User >> dispatch)
 
     let view userView model dispatch =
-        userView model (UserMsg >> dispatch)
+        userView model (User >> dispatch)
     
     program
     |> Program.map init update view setState subs

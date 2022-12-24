@@ -149,6 +149,7 @@ module Error =
 type Decoded<'Result> = Validation<'Result, Error> aval
 type Decoder<'Element, 'Result> = Path * 'Element -> Decoded<'Result>
 type Decoder<'Result> = Decoder<Element, 'Result>
+type Encoder<'a> = 'a -> Element
 
 module Encode =
     let object (props : (string * Element) list) =

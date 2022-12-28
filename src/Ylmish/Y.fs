@@ -15,7 +15,7 @@ open Ylmish.Disposables
 [<Fable.Core.Erase>]
 [<RequireQualifiedAccess>]
 type Element =
-    | Str
+    | Str of string
     | Arr of Y.Array<Element>
     | Map of Y.Map<Element>
 
@@ -311,6 +311,12 @@ module Array =
             |> yarray.push
         yarray
 
+module Map =
+    let toAdaptive (ymap : Y.Map<YElement>) : amap<string, AElement> =
+        failwith "not implemented"
+
+    let ofAdaptive (amap : amap<string, AElement>) : Y.Map<YElement> =
+        failwith "not impl"
 
 module Element =
     let toAdaptive (yelement : YElement) : AElement =

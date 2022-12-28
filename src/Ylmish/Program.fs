@@ -26,11 +26,11 @@ open Ylmish.Adaptive.Codec
 //     let inline instance< ^T, ^AdaptiveT when (^T or ^AdaptiveT) : (static member Unpersist : Unpersist< ^T, ^AdaptiveT >) > =
 //         ((^T or ^AdaptiveT) : (static member Unpersist : Unpersist< ^T, ^AdaptiveT >) ())
 
-type YlmishOptions<'model, 'amodel> = private {
+type YlmishOptions<'model, 'amodel> = {
     Create : 'model -> 'amodel
-    Update : 'amodel -> 'model -> 'amodel
+    Update : 'amodel -> 'model -> unit
     Encode : Encoder<'amodel>
-    Decode : Decoder<'amodel>
+    Decode : Decoder<'model>
     Doc : Y.Doc
 }
 
@@ -50,23 +50,22 @@ type YlmishOptions<'model, 'amodel> = private {
 //    ()
 
 type Message<'model, 'msg> =
-    private
     | Set of 'model
     | User of 'msg
 
-
-let toYlmish<'model, 'amodel> (options : YlmishOptions<'model, 'amodel>) (program : Program<'a,'model,'msg,'view>) =
-    let mutable amodel : 'amodel = Unchecked.defaultof<_>
+[<GeneralizableValue>]
+let withYlmish (options : YlmishOptions<'model, 'amodel>) (program: Program<'arg, 'model, 'msg, 'view>) =
+    //let mutable amodel : 'amodel = Unchecked.defaultof<_>
 
     let update userUpdate msg model =
         match msg with
         | Set m ->
-            amodel <- options.Update amodel m
+            //amodel <- options.Update amodel m
             m, Cmd.none
         | User userMsg ->
             let m, c = userUpdate userMsg model
             let c = c |> Cmd.map User
-            amodel <- options.Update amodel m
+            //amodel <- options.Update amodel m
             m, c
 
     let subs userSubscribe model =
@@ -74,10 +73,10 @@ let toYlmish<'model, 'amodel> (options : YlmishOptions<'model, 'amodel>) (progra
             userSubscribe model |> Cmd.map User 
         ]
 
-    let init userInit () =
-        let m, c = userInit ()
-        do amodel <- options.Create m
-        let asdf = options.Encode amodel
+    let init userInit arg =
+        let m, c = userInit arg
+        //do amodel <- options.Create m
+        //let asdf = options.Encode amodel
         let c = c |> Cmd.map User
         m, c
 

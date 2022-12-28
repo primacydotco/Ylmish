@@ -88,21 +88,30 @@ Using Ylmish.Adaptive.Codec:
 
 ## TODO
 
-1. IndexList starts at 1 is probably why tests are failing
-1. We need get-or-insert semantics for nested Y types so our maps and arrays aren't overwritten by two clients initializing shared types.
+1. Separate directions of sync'ing
+
+	1. Write a test for the motivator of this change, that is
+		1. ensuring existing (state data) maps aren't overwritten
+		1. ensuring new maps can be added from the app data
+	1. Find another way to handle the sentinel thingo so it doesn't get into a loop of sync'ing.
+
+1. Consider get-or-insert semantics for nested Y types so our maps and arrays aren't overwritten by two clients initializing shared types.
+
    We could code around this it by only using top-level maps and arrays, representing nested types by name.
    For example, `Y.Doc.getMap('x.y.z')` to represent a map `z` inside a map `y` inside the top-level map `x`.
    Maybe the [key-value type] will support this?(https://github.com/yjs/yjs/issues/255).
-1. Value could be erased
-   ```fsharp
-   [<Erase>]
-   type Value =
-   | Map of Y.Map<Value>
-   | Array of Y.Map<Array>
-   | Text of Y.Text
-   | String of string
-   | Number of ?
-   | Object of obj
-   ```
-   https://github.com/fable-compiler/Fable/issues/2492
+
+1. IndexList starts at 1 is probably why tests are failing
+
+1. Ylmish.Adaptive.Codec.Decoders will need access to the Elmish model.
+
+   The app data will have elements not persisted by state data. (For example, data that is only relevant to current interactions or the current session.) This app data needs to be retained through changes to state data.
+   Therefore, when the developer writes a decoder they need access to the current Elmish model to express how app data and state data should be merged.
+
+   `Decoder<'Element, 'Result>` is already a Reader monad so this might be accomplished by tupling the Elmish model into the `'Element` env parameter and implementing an 'ask' function to the `Decode.object` builder
+
+1. Elmish has different versions for Fable and .NET. We need to use the right one.
+
+   https://github.com/elmish/elmish#using-elmish
+
 1. Investigate supporting [Ycs](https://github.com/yjs/ycs) or [Yrs](https://github.com/y-crdt/y-crdt (with a FFI binding) (in addition to [Yjs](https://github.com/yjs/yjs) (./src/Fable.Yjs)).

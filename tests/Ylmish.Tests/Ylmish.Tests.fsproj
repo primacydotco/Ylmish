@@ -4,10 +4,12 @@
     <GenerateProgramFile>false</GenerateProgramFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="ext/Elmish.fs" />
     <Compile Include="Adaptive.Codec.fs" />
     <Compile Include="Adaptive.Index.fs" />
     <Compile Include="Y.Delta.fs" />
     <Compile Include="Y.Text.fs" />
+    <Compile Include="Program.fs" />
     <Compile Include="Ylmish.Tests.fs" />
   </ItemGroup>
   <ItemGroup>
@@ -15,7 +17,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Expecto" />
-    <PackageReference Include="Fable.Mocha" />
+	<PackageReference Include="Fable.Mocha" />
     <PackageReference Include="FSharp.Core" />
     <PackageReference Include="Hedgehog" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />

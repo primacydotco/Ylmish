@@ -86,13 +86,13 @@ module private Example =
     module Codec =
         module Things =
             let encode (athing : AdaptiveThing) = Encode.object [
-                "name", Encode.value athing.name
-                "value", Encode.value athing.value
+                "name", athing.name |> Encode.value id
+                "value", athing.value |> Encode.value string
             ]
 
-            let decode : Decoder<Thing> = Decode.object {
-                let! name = Decode.object.key ("name", Decode.value'<string>)
-                let! value = Decode.object.key ("value", Decode.value'<int>)
+            let decode : Decoder<_,Thing> = Decode.object {
+                let! name = Decode.key "name" (Decode.required <| Decode.value Decoder.id)
+                let! value = Decode.key "value" (Decode.required <| Decode.value Decoder.tryParse)
                 return {
                     name = name
                     value = value
@@ -100,15 +100,15 @@ module private Example =
             }
 
         let encode (amodel : AdaptiveModel) = Encode.object [
-            "foo", Encode.value amodel.foo
-            "bar", Encode.value amodel.bar
-            "things", Encode.list Things.encode amodel.things
+            "bar",  amodel.bar |> Encode.value id
+            "foo", amodel.foo |> Encode.value string
+            "things", amodel.things |> Encode.list Things.encode 
         ]
 
-        let decode : Decoder<Model> = Decode.object {
-            let! things = Decode.object.key ("things", Decode.list Things.decode)
-            let! foo = Decode.object.key ("foo", Decode.value'<int>)
-            let! bar = Decode.object.key ("bar", Decode.value'<string>)
+        let decode : Decoder<_,_> = Decode.object {
+            let! things = Decode.key "things" (Decode.required <| Decode.list (Decode.required Things.decode))
+            let! foo = Decode.key "foo" (Decode.required <| Decode.value Decoder.tryParse)
+            let! bar = Decode.key "bar" (Decode.required <| Decode.value Decoder.id)
             return {
                 things = things
                 foo = foo
@@ -165,9 +165,12 @@ let tests = testList "Ylmish.Adaptive.Codec" [
         let expected =
             items
             |> AList.map (fun i -> i.name)
+            |> AList.force
 
-        Expect.equal (AList.force actual) (AList.force expected) ""
+        Expect.equal (actual) (expected) ""
     }
+    // Currently failing 
+    // https://github.com/fsprojects/FSharp.Data.Adaptive/issues/108
     testCase "roundtrips updates" <| fun _ -> Property.check <| property {
         let! model = Example.Thing.gen |> Gen.map Example.AdaptiveThing
         let model' =

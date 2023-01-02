@@ -8,22 +8,33 @@ open Yjs
 open Ylmish.Adaptive
 open Ylmish.Disposables
 
-// TODO move to Yjs Fable bindings
-// Y.Map, Y.Array only support these element types anyway
-// > Collection used to store key-value entries in an unordered manner. Keys are always represented as UTF-8 strings. Values can be any value type supported by Yrs: JSON-like primitives as well as shared data types.
-// https://github.com/y-crdt/y-crdt/blob/279cd56d7472fbb41af743ecf28f552024cabd65/yrs/src/types/map.rs#L15-L17
-[<Fable.Core.Erase>]
-[<RequireQualifiedAccess>]
-type Element =
-    | Str of string
-    | Arr of Y.Array<Element>
-    | Map of Y.Map<Element>
+module A =
 
-/// An Adapative element.
-type AElement = Ylmish.Adaptive.Codec.Element
+    /// A value inside an Adaptive element
+    type Value =
+        | String of string
+        | Text of IndexList<char>
 
-/// A Y element.
-type YElement = Element
+    /// An Adapative element.
+    type Element = Ylmish.Adaptive.Codec.Element<Value>
+
+module Y =
+    module Y =
+        // TODO move this type to Yjs Fable bindings
+        // Y.Map, Y.Array only support these element types anyway
+        // > Collection used to store key-value entries in an unordered manner. Keys are always represented as UTF-8 strings. Values can be any value type supported by Yrs: JSON-like primitives as well as shared data types.
+        // https://github.com/y-crdt/y-crdt/blob/279cd56d7472fbb41af743ecf28f552024cabd65/yrs/src/types/map.rs#L15-L17
+        // Null is a proper value
+        // https://github.com/yjs/yjs/blob/9afc5cf61531f19d9caceb590002392ad393ed62/tests/y-map.tests.js#L106
+        [<Fable.Core.Erase>]
+        [<RequireQualifiedAccess>]
+        type Element =
+            | String of string
+            | Array of Y.Array<Element option>
+            | Map of Y.Map<Element option>
+
+    /// A Y element.
+    type Element = Y.Element
 
 [<RequireQualifiedAccess>]
 module Delta =
@@ -232,7 +243,7 @@ module Text =
 module Array =
     module Impl =
         let toAdaptive delta =
-            let folder = Delta.ToAdaptive.folder (fun (items : Array<YElement>) i -> Element.toAdaptive items[i]) (fun items -> items.Count)
+            let folder = Delta.ToAdaptive.folder (fun (items : Array<Y.Element option>) i -> items[i] |> Option.map Element.toAdaptive) (fun items -> items.Count)
             Delta.toAdaptive folder delta
 
         let ofAdaptive list delta =
@@ -251,11 +262,11 @@ module Array =
                     Array.empty
             Delta.ofAdaptive folder delta
 
-    let attach (alist : AElement clist) (yarray : Y.Array<YElement>) : IDisposable =
+    let attach (alist : clist<A.Element option>) (yarray : Y.Array<Y.Element option>) : IDisposable =
         let mutable sentinel = false
         let d1 =
             // https://docs.yjs.dev/api/delta-format
-            let f (e : Y.Array.Event<YElement>) (_ : Y.Transaction) =
+            let f (e : Y.Array.Event<Y.Element option>) (_ : Y.Transaction) =
                 if sentinel then
                     sentinel <- false
                     () 
@@ -295,34 +306,34 @@ module Array =
 
         new CompositeDisposable (d1, d2)
 
-    let toAdaptive (yarray : Y.Array<YElement>) : clist<AElement> =
+    let toAdaptive (yarray : Y.Array<Y.Element option>) : clist<A.Element option> =
         let alist =
             yarray
-            |> Seq.map Element.toAdaptive
+            |> Seq.map (Option.map Element.toAdaptive)
             |> clist
         let _ = attach alist yarray
         alist
 
-    let ofAdaptive (alist : alist<AElement>) : Y.Array<YElement> =
+    let ofAdaptive (alist : alist<A.Element option>) : Y.Array<Y.Element option> =
         let yarray = Y.Array.Create ()
         do AList.force alist
-            |> IndexList.map Element.ofAdaptive
+            |> IndexList.map (Option.map Element.ofAdaptive)
             |> IndexList.toArray
             |> yarray.push
         yarray
 
 module Map =
-    let toAdaptive (ymap : Y.Map<YElement>) : amap<string, AElement> =
+    let toAdaptive (ymap : Y.Map<Y.Element>) : amap<string, A.Element> =
         failwith "not implemented"
 
-    let ofAdaptive (amap : amap<string, AElement>) : Y.Map<YElement> =
+    let ofAdaptive (amap : amap<string, A.Element>) : Y.Map<Y.Element> =
         failwith "not impl"
 
 module Element =
-    let toAdaptive (yelement : YElement) : AElement =
+    let toAdaptive (yelement : Y.Element) : A.Element =
         match yelement with
-        | YElement.Arr yarray -> AElement.List <| Array.toAdaptive yarray
+        | Y.Element.Array yarray -> A.Element.AList <| Array.toAdaptive yarray
 
-    let ofAdaptive (aelement : AElement) : YElement =
+    let ofAdaptive (aelement : A.Element) : Y.Element =
         match aelement with
-        | AElement.List alist -> YElement.Arr <| Array.ofAdaptive alist
+        | A.Element.AList alist -> Y.Element.Array <| Array.ofAdaptive alist

@@ -29,8 +29,8 @@ open Ylmish.Adaptive.Codec
 type YlmishOptions<'model, 'amodel> = {
     Create : 'model -> 'amodel
     Update : 'amodel -> 'model -> unit
-    Encode : Encoder<'amodel>
-    Decode : Decoder<'model>
+    Encode : Encoder<'amodel, Element<string>>
+    Decode : Decoder<Element<string>, 'model>
     Doc : Y.Doc
 }
 

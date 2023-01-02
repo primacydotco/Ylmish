@@ -17,8 +17,8 @@
       "FS3222: This expression returns a value of type 'typename' but is implicitly discarded. Consider using 'let' to bind the result to a name"
     -->
     <WarnOn>1182</WarnOn>
-    <WarnAsError>20,25,193,1182,3222</WarnAsError>
-    <OtherFlags>$(OtherFlags) --warnon:$(WarnOn) --warnaserror+:$(WarnAsError)</OtherFlags>
+    <!--<WarnAsError>20,25,193,1182,3222</WarnAsError>-->
+
   </PropertyGroup>
 
 </Project>

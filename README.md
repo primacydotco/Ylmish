@@ -94,15 +94,19 @@ Using Ylmish.Adaptive.Codec:
    1. existing nested record
    1. new nested record
 
-1. Separate directions of syncing
+1. Investigate failing `Ylmish.Adaptive.Codec.roundtrip updates` test.
 
-	Right now `Y.Text.attach` sets up bi-directional syncing. This should be separated into single directions so that encoding can work with different schemas to decoding which is important for when schemas change over time.
+1. Implement adaptive-to-Y attaching (syncing), but separate directions
+
+	Right now `Y.Text.attach` sets up bi-directional sync. This should be separated into single directions so that encoding can work with different schemas to decoding which is important for when schemas change over time.
 
 	1. Write a test for the motivator of this change, that is
 		1. ~~ensuring existing (state data) maps aren't overwritten~~
 		1. ~~ensuring new maps can be added from the app data~~
-	   Added to `Program.fs`
-	1. Find another way to handle the sentinel thingo so it doesn't get into a loop of sync'ing.
+	   Added to tests in  `Program.fs`
+	1. Find another way to handle the sentinel thingo so it doesn't get into a loop. (Ideally considering running multi-threaded in .NET, though minimally we could just assume single-threaded JS for now.)
+
+1. Implement the actual attaching of the adaptive model to the Y.Doc in Program.withYlmish so that the tests in Program.withYlmish pass.
 
 1. Ylmish.Adaptive.Codec.Decoders will need access to the Elmish model.
 

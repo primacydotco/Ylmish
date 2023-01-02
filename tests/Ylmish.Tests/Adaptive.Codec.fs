@@ -91,8 +91,8 @@ module private Example =
             ]
 
             let decode : Decoder<_,Thing> = Decode.object {
-                let! name = Decode.key "name" (Decode.required <| Decode.value Decoder.id)
-                let! value = Decode.key "value" (Decode.required <| Decode.value Decoder.tryParse)
+                let! name = Decode.object.required "name" Decode.value
+                let! value = Decode.object.required "value" Decode.tryParse
                 return {
                     name = name
                     value = value
@@ -106,9 +106,9 @@ module private Example =
         ]
 
         let decode : Decoder<_,_> = Decode.object {
-            let! things = Decode.key "things" (Decode.required <| Decode.list (Decode.required Things.decode))
-            let! foo = Decode.key "foo" (Decode.required <| Decode.value Decoder.tryParse)
-            let! bar = Decode.key "bar" (Decode.required <| Decode.value Decoder.id)
+            let! things = Decode.object.required "things" (Decode.list.required Things.decode)
+            let! foo = Decode.object.required "foo" Decode.tryParse
+            let! bar = Decode.object.required "bar" Decode.value
             return {
                 things = things
                 foo = foo

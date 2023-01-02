@@ -4,7 +4,8 @@
     <GenerateProgramFile>false</GenerateProgramFile>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="ext/Elmish.fs" />
+    <Compile Include="common\Example.fs" />
+    <Compile Include="common\Elmish.fs" />
     <Compile Include="Adaptive.Codec.fs" />
     <Compile Include="Adaptive.Index.fs" />
     <Compile Include="Y.Delta.fs" />
@@ -16,6 +17,7 @@
     <ProjectReference Include="../../src/Ylmish/Ylmish.fsproj" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Adaptify.MSBuild" />
     <PackageReference Include="Expecto" />
 	<PackageReference Include="Fable.Mocha" />
     <PackageReference Include="FSharp.Core" />

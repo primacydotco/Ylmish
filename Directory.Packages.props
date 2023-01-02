@@ -1,5 +1,8 @@
 <Project>
   <ItemGroup>
+	<PackageVersion Include="Adaptify.Core" Version="1.1.9" />
+	<PackageVersion Include="Adaptify.MSBuild" Version="1.1.9" />
+	  
     <PackageVersion Include="Elmish" Version="3.1.0" />
 
     <PackageVersion Include="Expecto" Version="9.0.4" />

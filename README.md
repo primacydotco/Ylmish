@@ -88,11 +88,6 @@ Using Ylmish.Adaptive.Codec:
 
 ## TODO
 
-1. Write some tests for Program.withYlmish
-   1. list of records
-   1. list of values
-   1. existing nested record
-   1. new nested record
 
 1. Investigate failing `Ylmish.Adaptive.Codec.roundtrip updates` test.
 

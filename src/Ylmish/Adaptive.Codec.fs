@@ -283,6 +283,30 @@ module Decoder =
         else Decoded.error <| Error.UnexpectedType {| Actual = typeof<string>; Expected = [ typeof<'b> ]; Path = path |}
 
 module Decode = 
+    module Element =        
+        let value (f : Decoder<_,_>) : Decoder<_,_> = fun (path, el) ->
+            match el with
+            | Element.Value v ->
+                f (path, v)
+            | el ->
+                Decoded.error <| UnexpectedKind {|
+                    Path = path
+                    Actual = el.toKind ()
+                    Expected = [ Kind.Value ]
+                |}
+
+        let list (f : Decoder<_,_>) : Decoder<_,_> = fun (path, el) ->
+            let f i el = f (ArrayIndex i :: path, el)
+            match el with
+            | Element.AList v ->
+                v |> Decoded.traversei f
+            | el ->
+                Decoded.error <| UnexpectedKind {|
+                    Path = path
+                    Actual = el.toKind ()
+                    Expected = [ Kind.List ]
+                |}
+
     let optional (f : Decoder<_,_>) : Decoder<_,_> = fun (path, el) ->
         match el with
         | Some el ->
@@ -295,28 +319,9 @@ module Decode =
         | Some el -> f (path, el)
         | None -> Decoded.error <| MissingProperty {| Path = path |}
 
-    let value (f : Decoder<_,_>) : Decoder<_,_> = fun (path, el) ->
-        match el with
-        | Element.Value v ->
-            f (path, v)
-        | el ->
-            Decoded.error <| UnexpectedKind {|
-                Path = path
-                Actual = el.toKind ()
-                Expected = [ Kind.Value ]
-            |}
+    let value x = Element.value Decoder.id x
 
-    let list (f : Decoder<_,_>) : Decoder<_,_> = fun (path, el) ->
-        let f i el = f (ArrayIndex i :: path, el)
-        match el with
-        | Element.AList v ->
-            v |> Decoded.traversei f
-        | el ->
-            Decoded.error <| UnexpectedKind {|
-                Path = path
-                Actual = el.toKind ()
-                Expected = [ Kind.List ]
-            |}
+    let inline tryParse x = Element.value Decoder.tryParse x
 
     let key key (f : Decoder<_,_>) : Decoder<_,_> = fun (path, el) ->
         match el with
@@ -348,6 +353,20 @@ module Decode =
         member _.Zero () = Decoder.ok ()
         member _.Run f = f
 
+        /// Decodes a property of the object, by its key, which is required.
+        member _.required (k : string) f =
+            key k (required f)
+
+        /// Decodes a property of the object, by its key, which is optional.
+        member _.optional (k : string) f =
+            key k (optional f)
+
     let object = ObjectBuilder ()
+
+    module list =
+        /// Decodes a list whose elements are required.
+        let required f = Element.list <| required f
+        /// Decodes a list whose elements are optional.
+        let optional f = Element.list <| optional f
 
 // let (?) decode path = Decoder.key path decode

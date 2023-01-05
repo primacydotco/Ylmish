@@ -1,10 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <GenerateProgramFile>false</GenerateProgramFile>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="common\Example.fs" />
+    <Compile Include="common\Example.g.fs" />
     <Compile Include="common\Elmish.fs" />
     <Compile Include="Adaptive.Codec.fs" />
     <Compile Include="Adaptive.Index.fs" />
@@ -17,9 +18,9 @@
     <ProjectReference Include="../../src/Ylmish/Ylmish.fsproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Adaptify.MSBuild" />
+    <PackageReference Include="Adaptify.Core" />
     <PackageReference Include="Expecto" />
-	<PackageReference Include="Fable.Mocha" />
+    <PackageReference Include="Fable.Mocha" />
     <PackageReference Include="FSharp.Core" />
     <PackageReference Include="Hedgehog" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />

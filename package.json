@@ -5,12 +5,15 @@
   "type": "module",
   "scripts": {
     "install": "dotnet restore && dotnet tool restore",
-    "test+watch": "dotnet fable watch tests/Ylmish.Tests -o build/tests/Ylmish.Tests --run mocha build/tests/Ylmish.Tests/Ylmish.Tests.js --watch --parallel"
+    "watch-adaptify-tests": "dotnet watch --verbose --project tests/Ylmish.Tests/Ylmish.Tests.fsproj -- msbuild Ylmish.Tests.fsproj /t:AdaptifyLocal",
+    "watch-fable-and-mocha": "dotnet fable watch tests/Ylmish.Tests/Ylmish.Tests.fsproj -o build/tests/Ylmish.Tests --run mocha build/tests/Ylmish.Tests/Ylmish.Tests.js --watch --parallel",
+    "test+watch": "concurrently --kill-others --names \"Fable/Mocha,Adaptify\" -c green,cyan \"npm:watch-fable-and-mocha\" \"npm:watch-adaptify-tests\"" 
   },
   "keywords": [],
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "concurrently": "7.6.0",
     "mocha": "8.3.2"
   },
   "dependencies": {

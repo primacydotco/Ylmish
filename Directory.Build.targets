@@ -1,0 +1,41 @@
+<Project>
+    <ItemGroup>
+        <!-- Tell "dotnet watch" to ignore generated files (because changes to them were probably triggered by dotnet watch itself) -->
+        <Compile Update="**\*.g.fs" Watch="false" />
+    </ItemGroup>
+    <!--
+        Custom target which uses the Adaptify dotnet tool running in local mode.
+
+        We use this instead of the Adaptify.MSBuild target for Fable compatibility:
+        1. the Adaptify.MSBuild target:
+            a. always runs in server mode
+            b. works by generating files in the user's temp directory then adding them to the "Compile" itemgroup before
+               "CoreCompile" runs
+        2. Fable doesn't run custom targets when building - it just works out which files to build then builds them itself
+        3. the "addtoproject" option adds generated files directly to the project file, but is only supported in local mode
+
+        This target will be called automatically for the .NET build (because we set "BeforeTargets" to "CoreCompile").
+
+        Look in ./package.json to see how we call this target when necessary for the Fable build.
+    -->
+    <Target
+        Name="AdaptifyLocal"
+        BeforeTargets="CoreCompile"
+        Condition="'$(Adaptifying)' != 'true'"
+        >
+        <!-- When NOT running under NCRUNCH -->
+        <Exec
+            Condition="'$(NCRUNCH)' != '1'"
+            Command="dotnet adaptify --local --addtoproject $(MSBuildProjectFullPath)"
+            EnvironmentVariables="Adaptifying=true"
+        />
+
+        <!-- When running under NCRUNCH -->
+        <Exec
+            Condition="'$(NCRUNCH)' == '1'"
+            Command="dotnet adaptify --local --addtoproject $(NCrunchOriginalProjectPath)"
+            EnvironmentVariables="Adaptifying=true"
+            WorkingDirectory="$(NCrunchOriginalSolutionDir)"
+        />
+    </Target>
+</Project>

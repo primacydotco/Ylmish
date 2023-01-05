@@ -2,13 +2,14 @@
   "version": 2,
   "dependencies": {
     ".NETStandard,Version=v2.0": {
-      "Elmish": {
+      "Fable.Elmish": {
         "type": "Direct",
         "requested": "[3.1.0, )",
         "resolved": "3.1.0",
-        "contentHash": "AwXmBx+dIMWsUOpFjjqZ4HZ71nGE0gMpy0iEox2ZZKis/pqLrhU49qnyB+05OEWjonwS0zfAAAPchV84y6qp5w==",
+        "contentHash": "g6oAwxcKz4mIYvVlaPSrF+YoHrraJf8zpCK7cZpwtAHcbJdZkCmX9jaCYc85PaGOXywbUsulBOH5794HelUqZg==",
         "dependencies": {
-          "FSharp.Core": "4.6.2"
+          "FSharp.Core": "4.6.2",
+          "Fable.Core": "3.0.0"
         }
       },
       "FSharp.Core": {

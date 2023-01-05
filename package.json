@@ -6,15 +6,16 @@
   "scripts": {
     "install": "dotnet restore && dotnet tool restore",
     "watch-adaptify-tests": "dotnet watch --verbose --project tests/Ylmish.Tests/Ylmish.Tests.fsproj -- msbuild Ylmish.Tests.fsproj /t:AdaptifyLocal",
-    "watch-fable-and-mocha": "dotnet fable watch tests/Ylmish.Tests/Ylmish.Tests.fsproj -o build/tests/Ylmish.Tests --run mocha build/tests/Ylmish.Tests/Ylmish.Tests.js --watch --parallel",
-    "test+watch": "concurrently --kill-others --names \"Fable/Mocha,Adaptify\" -c green,cyan \"npm:watch-fable-and-mocha\" \"npm:watch-adaptify-tests\"" 
+    "watch-fable-and-mocha": "dotnet fable watch tests/Ylmish.Tests/Ylmish.Tests.fsproj -o build/tests/Ylmish.Tests --sourceMaps --run mocha --require source-map-support/register build/tests/Ylmish.Tests/Ylmish.Tests.js --watch --parallel",
+    "test+watch": "concurrently --kill-others --names \"Fable/Mocha,Adaptify\" -c green,cyan \"npm:watch-fable-and-mocha\" \"npm:watch-adaptify-tests\""
   },
   "keywords": [],
   "author": "",
   "license": "MIT",
   "devDependencies": {
     "concurrently": "7.6.0",
-    "mocha": "8.3.2"
+    "mocha": "8.3.2",
+    "source-map-support": "0.5.21"
   },
   "dependencies": {
     "yjs": "13.5.35"

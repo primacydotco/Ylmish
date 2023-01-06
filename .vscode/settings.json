@@ -1,5 +1,4 @@
 {
     "editor.inlayHints.enabled": "offUnlessPressed",
-    "mochaExplorer.files": "./build/tests/**/*.js",
-    "mochaExplorer.require": "source-map-support/register"
+    "mochaExplorer.watch": "./build/tests/**/*.js"
 }

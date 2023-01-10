@@ -120,11 +120,11 @@ Using Ylmish.Adaptive.Codec:
    For example, `Y.Doc.getMap('x.y.z')` to represent a map `z` inside a map `y` inside the top-level map `x`.
    Maybe the [key-value type] will support this?(https://github.com/yjs/yjs/issues/255).
 
-1. IndexList in FSharp.Data.Adaptive starts at 1 is probably why the Delta tests are failing
+1. ~~IndexList in FSharp.Data.Adaptive starts at 1 is probably why the Delta tests are failing~~ *Fixed by #2 and #3*
 
-1. Elmish has different versions for Fable and .NET. We need to use the right one.
+1. ~~Elmish has different versions for Fable and .NET. We need to use the right one.~~ *Fixed by #1*
 
-   https://github.com/elmish/elmish#using-elmish
+   ~~https://github.com/elmish/elmish#using-elmish~~
 
 1. Investigate supporting [Ycs](https://github.com/yjs/ycs) or [Yrs](https://github.com/y-crdt/y-crdt (with a FFI binding) (in addition to [Yjs](https://github.com/yjs/yjs) (./src/Fable.Yjs)).
 

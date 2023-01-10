@@ -87,7 +87,7 @@ module Delta =
                 console.log("case 2: pos", string pos)
                 console.log("case 2: del", delta)
                 console.log("case 2: ix", index)
-                (index, pos + 1, delta) :: (index, pos, Y.Delta.Retain (pos (*+ 1 *))) :: []
+                (index, pos + 1, delta) :: (index, pos, Y.Delta.Retain (pos + 1)) :: []
             | (prevIndex, prevPos, Y.Delta.Insert (ins)) :: rest, ElementOperation.Set c
                 when index = Index.after prevIndex ->
                 console.log("case 3")

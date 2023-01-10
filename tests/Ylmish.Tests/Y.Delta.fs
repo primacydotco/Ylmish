@@ -17,7 +17,7 @@ open Fable.Core.JS // console.log
 let private toIndexListDelta list =
     let delta = 
         list
-        |> List.map (fun (i, o) -> Index.at (i + 1), o)
+        |> List.map (fun (i, o) -> Index.at i, o)
         |> IndexListDelta.ofList
     let placeholders =
         if list.IsEmpty

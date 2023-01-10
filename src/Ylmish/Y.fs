@@ -83,11 +83,13 @@ module Delta =
                 (index, 0, delta) :: []
             | [], Delta append empty delta ->
                 console.log("case 2")
-                let pos = getPosition index// + 1
+                let pos = getPosition index
+                let toRetain = pos + 1 // +1 because the position is an index, but we need the count of items to retain
                 console.log("case 2: pos", string pos)
                 console.log("case 2: del", delta)
                 console.log("case 2: ix", index)
-                (index, pos + 1, delta) :: (index, pos, Y.Delta.Retain (pos + 1)) :: []
+                console.log("case 2: toRetain", toRetain)
+                (index, pos + 1, delta) :: (index, pos, Y.Delta.Retain toRetain) :: []
             | (prevIndex, prevPos, Y.Delta.Insert (ins)) :: rest, ElementOperation.Set c
                 when index = Index.after prevIndex ->
                 console.log("case 3")

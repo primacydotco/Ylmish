@@ -23,11 +23,11 @@ let tests = testList "Adaptive.Index" [
         ] ""
     }
     test "at 0" {
-        Expect.equal (Index.at 0) (Index.zero) ""
+        Expect.equal (Index.at 0) (Index.after Index.zero) ""
     }
     test "at 3" {
         Expect.equal (Index.at 3) (
-            Index.after (Index.after (Index.after Index.zero))
+            Index.after (Index.after (Index.after (Index.after Index.zero)))
         ) ""
     }
     test "increment 0" {
@@ -42,6 +42,6 @@ let tests = testList "Adaptive.Index" [
         let ls = IndexList.ofList [ 'a'; 'b'; 'c' ]
         Expect.equal (ls.[0]) 'a' ""
         Expect.equal (ls.TryFind 'a' |> Option.get) (Index.after Index.zero) ""
-        // Expect.equal (ls.TryFind 'a' |> Option.get) (Index.at 0) ""
+        Expect.equal (ls.TryFind 'a' |> Option.get) (Index.at 0) ""
     }
 ]

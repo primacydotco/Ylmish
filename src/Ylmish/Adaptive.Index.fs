@@ -11,8 +11,12 @@ let generate f start count =
     List.unfold (generator count f) (0, start)
 
 let increment start i =
-    generate (fun _ i -> i) start i 
+    generate (fun _ i -> i) start i
     |> List.tryLast
     |> Option.defaultValue start
 
-let at = increment Index.zero
+let at =
+    // Index.zero seems to be roughly equivalent to a normal index of -1 i.e. it is the index which points before the 1st item.
+    //
+    // Therefore, the index of the 1st item should be after Index.zero.
+    increment (Index.after Index.zero)

@@ -12,39 +12,63 @@ open Expecto
 #endif
 
 let tests = testList "Y.Text" [
-    test "ofAdaptive, atext_InsertAt()" {
-        let atext = clist [ 'a'; 'b'; 'd' ]
-        let ydoc = Y.Doc.Create ()
-        let ytext = Y.Text.ofAdaptive atext
-        let _ = ydoc.getMap("container").set("test", ytext)
+    testList "ofAdaptive" [
+        test "ofAdaptive (initialisation)" {
+            let atext = clist [ 'a'; 'b'; 'd' ]
+            let ydoc = Y.Doc.Create ()
+            let ytext = Y.Text.ofAdaptive atext
+            let _ = ydoc.getMap("container").set("test", ytext)
 
-        let _ = transact (fun () -> atext.InsertAt (2, 'c'))
+            Expect.equal (System.String.Concat atext) "abd" "atext doesn't equal expected value"
+            Expect.equal (ytext.toString()) "abd" "ytext doesn't equal expected value"
+        }
 
-        Expect.equal (System.String.Concat atext) "abcd" "equal"
-        Expect.equal (ytext.toString()) "abcd" "equal"
-    }
+        test "ofAdaptive, atext_InsertAt(): given \"abd\", insert 'c' to give \"abcd\"" {
+            let atext = clist [ 'a'; 'b'; 'd' ]
+            let ydoc = Y.Doc.Create ()
+            let ytext = Y.Text.ofAdaptive atext
+            let _ = ydoc.getMap("container").set("test", ytext)
 
-    test "ofAdaptive, ytext_insert()" {
-        let atext = clist [ 'a'; 'b'; 'd' ]
-        let ydoc = Y.Doc.Create ()
-        let ytext = Y.Text.ofAdaptive atext
-        let _ = ydoc.getMap("container").set("test", ytext)
+            let _ = transact (fun () -> atext.InsertAt (2, 'c'))
 
-        let _ = ytext.insert(2, "c")
+            Expect.equal (System.String.Concat atext) "abcd" "atext doesn't equal expected value"
+            Expect.equal (ytext.toString()) "abcd" "ytext doesn't equal expected value"
+        }
 
-        Expect.equal (System.String.Concat atext) "abcd" "equal"
-        // Expect.equal (ytext.toString()) "abcd" "equal"
-    }
+        test "ofAdaptive, ytext_insert(): given \"abd\", insert 'c' to give \"abcd\"" {
+            let atext = clist [ 'a'; 'b'; 'd' ]
+            let ydoc = Y.Doc.Create ()
+            let ytext = Y.Text.ofAdaptive atext
+            let _ = ydoc.getMap("container").set("test", ytext)
 
-    test "toAdaptive, ytext_insert()" {
-        let ydoc = Y.Doc.Create ()
-        let ytext = ydoc.getText "test"
-        let _ = ytext.insert(0, "abd")
-        let atext = Y.Text.toAdaptive ytext
+            let _ = ytext.insert(2, "c")
 
-        let _ = ytext.insert(2, "c")
+            Expect.equal (System.String.Concat atext) "abcd" "atext doesn't equal expected value"
+            Expect.equal (ytext.toString()) "abcd" "ytext doesn't equal expected value"
+        }
+    ]
 
-        Expect.equal (System.String.Concat atext) "abcd" "equal"
+    testList "toAdaptive" [
+        test "toAdaptive, (initialisation)" {
+            let ydoc = Y.Doc.Create ()
+            let ytext = ydoc.getText "test"
+            let _ = ytext.insert(0, "abd")
+            let atext = Y.Text.toAdaptive ytext
 
-    }
+            Expect.equal (System.String.Concat atext) "abd" "atext doesn't equal expected value"
+            Expect.equal (ytext.toString()) "abd" "ytext doesn't equal expected value"
+        }
+
+        test "toAdaptive, ytext_insert()" {
+            let ydoc = Y.Doc.Create ()
+            let ytext = ydoc.getText "test"
+            let atext = Y.Text.toAdaptive ytext
+
+            let _ = ytext.insert(0, "abd")
+            let _ = ytext.insert(2, "c")
+
+            Expect.equal (System.String.Concat atext) "abcd" "atext doesn't equal expected value"
+            Expect.equal (ytext.toString()) "abcd" "ytext doesn't equal expected value"
+        }
+    ]
 ]

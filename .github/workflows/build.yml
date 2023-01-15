@@ -19,6 +19,12 @@ jobs:
       with:
         global-json-file: ./global.json
 
+    - name: List dotnet SDKs
+      run: dotnet --list-sdks
+
+    - name: Restore dotnet tools
+      run: dotnet tool restore
+
     - name: Setup Node.js
       uses: actions/setup-node@v3
 

@@ -7,7 +7,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{2A69D5AF-F71
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{AC09B653-3BA2-4D37-9943-1808FA52D8C5}"
 EndProject
-Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Ylmish", "src\ylmish\Ylmish.fsproj", "{7A90BC6B-8DAE-4044-9496-4C7CFDF9AE45}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Ylmish", "src\Ylmish\Ylmish.fsproj", "{7A90BC6B-8DAE-4044-9496-4C7CFDF9AE45}"
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Ylmish.Tests", "tests\Ylmish.Tests\Ylmish.Tests.fsproj", "{FE4454EA-DA30-4F8B-A268-01CF891C351B}"
 EndProject

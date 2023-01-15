@@ -3,17 +3,15 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-
   "mocha": {
     "inline-diffs": true,
     "parallel": true,
     "require": "source-map-support/register",
     "spec": "build/tests/Ylmish.Tests/Ylmish.Tests.js"
   },
-
   "scripts": {
     "install": "dotnet restore && dotnet tool restore",
-    "adaptify": "msbuild tests/Ylmish.Tests/Ylmish.Tests.fsproj /t:AdaptifyLocal",
+    "adaptify": "dotnet msbuild tests/Ylmish.Tests/Ylmish.Tests.fsproj /t:AdaptifyLocal",
     "mocha": "dotnet fable tests/Ylmish.Tests/Ylmish.Tests.fsproj -o build/tests/Ylmish.Tests --sourceMaps --run mocha",
     "watch-adaptify-tests": "dotnet watch --verbose --project tests/Ylmish.Tests/Ylmish.Tests.fsproj -- msbuild Ylmish.Tests.fsproj /t:AdaptifyLocal",
     "watch-fable-and-mocha": "dotnet fable watch tests/Ylmish.Tests/Ylmish.Tests.fsproj -o build/tests/Ylmish.Tests --sourceMaps --run mocha --watch",

@@ -178,13 +178,9 @@ let tests = testList "Ylmish.Adaptive.Codec" [
         Expect.equal (actual) (expected) ""
     }
 
-    // Currently failing:
-    //
-    // https://github.com/fsprojects/FSharp.Data.Adaptive/issues/108
-    //
     // Tracking issue:
     //
-    // https://github.com/fsprojects/FSharp.Data.Adaptive/issues/108
+    // https://github.com/primacydotco/Ylmish/issues/11
     //
     //testCase "roundtrips updates" <| fun _ -> Property.check <| property {
     //    let! model = Example.Thing.gen |> Gen.map Example.AdaptiveThing
@@ -198,7 +194,7 @@ let tests = testList "Ylmish.Adaptive.Codec" [
     //        | Error e -> invalidOp e)
 
     //    let! updates = Example.Thing.gen |> Gen.list (Range.linear 0 100)
-
+    //    transact (fun () ->
     //    for update in updates do
     //        model.Update update
 
@@ -206,5 +202,6 @@ let tests = testList "Ylmish.Adaptive.Codec" [
     //        let value2 = AVal.force model.Current
 
     //        Expect.equal value1 value2 ""
+    //     )
     //}
 ]

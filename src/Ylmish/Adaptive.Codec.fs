@@ -281,6 +281,8 @@ module Decoder =
         let result = (^b: (static member TryParse: 'a * byref< ^b> -> bool) element, &value)
         printfn $"a (input) is {typeof<'a>}"
         printfn $"b (output) is {typeof<'b>}"
+        printfn $"input is {element}"
+        printfn $"output is {value}"
         printfn $"parsed {result}"
         if result then Decoded.ok value
         else Decoded.error <| Error.UnexpectedType {| Actual = typeof<string>; Expected = [ typeof<'b> ]; Path = path |}

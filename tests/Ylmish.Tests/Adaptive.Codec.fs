@@ -91,7 +91,7 @@ module private Example =
 
             let decode : Decoder<_,Thing> = Decode.object {
                 let! name = Decode.object.required "name" Decode.value
-                let! value = Decode.object.required "value" Decode.tryParse
+                let! value = Decode.object.required "value" Decode.Int32.tryParse
                 return {
                     name = name
                     value = value
@@ -106,7 +106,7 @@ module private Example =
 
         let decode : Decoder<_,_> = Decode.object {
             let! things = Decode.object.required "things" (Decode.list.required Things.decode)
-            let! foo = Decode.object.required "foo" Decode.tryParse
+            let! foo = Decode.object.required "foo" Decode.Int32.tryParse
             let! bar = Decode.object.required "bar" Decode.value
             return {
                 things = things

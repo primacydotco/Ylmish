@@ -275,18 +275,12 @@ module Decoder =
     let id : Decoder<'a, 'a> =
         fun (_, e) -> Decoded.ok e
 
-    /// Tries to parse a value to the inferred type using the built-in System parser.
-    let inline tryParse (path : Path, element : 'a) : Decoded<'b> =
-        let mutable value = Unchecked.defaultof< ^b>
-        let result = (^b: (static member TryParse: 'a * byref< ^b> -> bool) element, &value)
-        printfn $"a (input) is {typeof<'a>}"
-        printfn $"b (output) is {typeof<'b>}"
-        printfn $"input is {element}"
-        printfn $"output is {value}"
-        printfn $"parsed {result}"
-        if result then Decoded.ok value
-        else Decoded.error <| Error.UnexpectedType {| Actual = typeof<string>; Expected = [ typeof<'b> ]; Path = path |}
-
+    module Int32 =
+        let tryParse (path : Path, element : string) : Decoded<int32> =
+            match System.Int32.TryParse element with
+            | true, value -> Decoded.ok value
+            | false, _ -> Decoded.error <| Error.UnexpectedType {| Actual = typeof<string>; Expected = [ typeof<int32> ]; Path = path |}
+        
 module Decode = 
     module Element =        
         let value (f : Decoder<_,_>) : Decoder<_,_> = fun (path, el) ->
@@ -326,7 +320,8 @@ module Decode =
 
     let value x = Element.value Decoder.id x
 
-    let inline tryParse x = Element.value Decoder.tryParse x
+    module Int32 =
+        let tryParse x = Element.value Decoder.Int32.tryParse x
 
     let key key (f : Decoder<_,_>) : Decoder<_,_> = fun (path, el) ->
         match el with

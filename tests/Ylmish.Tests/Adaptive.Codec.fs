@@ -17,13 +17,13 @@ module private Example =
     type Thing =
         {
             name  : string
-            value : string
+            value : int
         }
 
     module Thing =
         let gen = gen {
             let! name = Gen.string (Range.linear 0 255) Gen.alphaNum
-            let! value = Gen.string (Range.linear 0 255) Gen.alphaNum
+            let! value = Gen.int32 (Range.linearBounded ())
             return {
                 name = name
                 value = value
@@ -54,7 +54,7 @@ module private Example =
                 _value_.Value <- value.value
         member __.Current = __adaptive
         member __.name = _name_ :> FSharp.Data.Adaptive.aval<Microsoft.FSharp.Core.string>
-        member __.value = _value_ :> FSharp.Data.Adaptive.aval<Microsoft.FSharp.Core.string>
+        member __.value = _value_ :> FSharp.Data.Adaptive.aval<Microsoft.FSharp.Core.int>
 
     [<System.Diagnostics.CodeAnalysis.SuppressMessage("NameConventions", "*")>]
     type AdaptiveModel(value : Model) =
@@ -91,7 +91,7 @@ module private Example =
 
             let decode : Decoder<_,Thing> = Decode.object {
                 let! name = Decode.object.required "name" Decode.value
-                let! value = Decode.object.required "value" Decode.value
+                let! value = Decode.object.required "value" Decode.tryParse
                 return {
                     name = name
                     value = value
@@ -126,10 +126,18 @@ module private Decode =
         | Error e -> invalidOp e
 
 let tests = testList "Ylmish.Adaptive.Codec" [
+    // Currently failing:
+    //
+    // https://github.com/fable-compiler/Fable/issues/3328
+    //
+    // Tracking issue:
+    //
+    // https://github.com/primacydotco/Ylmish/issues/10
+    //
     test "roundtrips" {
        let example : Example.Thing = {
            name = "Example Thing"
-           value = "42"
+           value = 42
        }
        let actual =
            example

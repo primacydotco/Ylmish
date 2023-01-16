@@ -279,6 +279,9 @@ module Decoder =
     let inline tryParse (path : Path, element : 'a) : Decoded<'b> =
         let mutable value = Unchecked.defaultof< ^b>
         let result = (^b: (static member TryParse: 'a * byref< ^b> -> bool) element, &value)
+        printfn $"a (input) is {typeof<'a>}"
+        printfn $"b (output) is {typeof<'b>}"
+        printfn $"parsed {result}"
         if result then Decoded.ok value
         else Decoded.error <| Error.UnexpectedType {| Actual = typeof<string>; Expected = [ typeof<'b> ]; Path = path |}
 

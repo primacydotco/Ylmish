@@ -178,11 +178,15 @@ let tests = testList "Ylmish.Adaptive.Codec" [
         Expect.equal (actual) (expected) ""
     }
 
+    // Currently failing:
+    //
+    // https://github.com/fable-compiler/Fable/issues/3328
+    //
     // Tracking issue:
     //
-    // https://github.com/primacydotco/Ylmish/issues/11
+    // https://github.com/primacydotco/Ylmish/issues/10
     //
-    //testCase "roundtrips updates" <| fun _ -> Property.check <| property {
+    // testCase "roundtrips updates" <| fun _ -> Property.check <| property {
     //    let! model = Example.Thing.gen |> Gen.map Example.AdaptiveThing
     //    let model' =
     //        model
@@ -203,5 +207,5 @@ let tests = testList "Ylmish.Adaptive.Codec" [
 
     //        Expect.equal value1 value2 ""
     //     )
-    //}
+    // }
 ]

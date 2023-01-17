@@ -7,7 +7,8 @@
     "inline-diffs": true,
     "parallel": true,
     "require": "source-map-support/register",
-    "spec": "build/tests/Ylmish.Tests/Ylmish.Tests.js"
+    "spec": "build/tests/Ylmish.Tests/Ylmish.Tests.js",
+    "timeout": 20000
   },
   "scripts": {
     "install": "dotnet restore && dotnet tool restore",

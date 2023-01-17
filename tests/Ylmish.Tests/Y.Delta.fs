@@ -75,109 +75,110 @@ let tests = testList "Y.Delta" [
         }
     ]
 
-    testList "toAdaptive" [
-        test "toAdaptive ins 'abc'" {
+    testList "applyYDelta" [
+        test "applyYDelta given empty clist, ins \"abc\" should give \"abc\"" {
             let input = ResizeArray [
                 Y.Delta.Insert "abc"
             ]
 
             let clist = clist()
-            let delta = Y.Text.Impl.toAdaptive clist.Count input
-            clist.Perform(delta)
+            Y.Text.Impl.applyYDelta input clist
 
             Expect.equal (System.String.Concat clist) "abc" $"{nameof clist} doesn't equal expected value"
-
-            Expect.equal (IndexListDelta.toList delta) [
-                (Index.at 0, ElementOperation<char>.Set 'a')
-                (Index.at 1, ElementOperation<char>.Set 'b')
-                (Index.at 2, ElementOperation<char>.Set 'c')
-            ] ""
         }
-        test "toAdaptive ret 0, ins 'abc'" {
+        test "applyYDelta given empty clist, given ret 0, ins \"abc\" should give \"abc\"" {
             let input = ResizeArray [
                 Y.Delta.Retain 0
                 Y.Delta.Insert "abc"
             ]
+
             let clist = clist()
-            let delta = Y.Text.Impl.toAdaptive clist.Count input
-            clist.Perform(delta)
+            Y.Text.Impl.applyYDelta input clist
 
             Expect.equal (System.String.Concat clist) "abc" $"{nameof clist} doesn't equal expected value"
-
-            Expect.equal (IndexListDelta.toList delta) [
-                (Index.at 0, ElementOperation.Set 'a')
-                (Index.at 1, ElementOperation.Set 'b')
-                (Index.at 2, ElementOperation.Set 'c')
-            ] ""
         }
-        test "toAdaptive ret 2, ins 'abc'" {
+        test "applyYDelta given \"XY\", ret 2, ins \"abc\" should give \"XYabc\"" {
             let input = ResizeArray [
                 Y.Delta.Retain 2
                 Y.Delta.Insert "abc"
             ]
+
             let clist = clist("XY")
-            let delta = Y.Text.Impl.toAdaptive clist.Count input
-            clist.Perform(delta)
+            Y.Text.Impl.applyYDelta input clist
 
             Expect.equal (System.String.Concat clist) "XYabc" $"{nameof clist} doesn't equal expected value"
-
-            Expect.equal (IndexListDelta.toList delta) [
-                (Index.at 2, ElementOperation.Set 'a')
-                (Index.at 3, ElementOperation.Set 'b')
-                (Index.at 4, ElementOperation.Set 'c')
-            ] ""
         }
-        test "toAdaptive ret 2, del 2" {
+        test "applyYDelta given \"XYZ\", ret 2, ins \"abc\" should give \"XYabcZ\"" {
+            let input = ResizeArray [
+                Y.Delta.Retain 2
+                Y.Delta.Insert "abc"
+            ]
+
+            let clist = clist("XYZ")
+            Y.Text.Impl.applyYDelta input clist
+
+            Expect.equal (System.String.Concat clist) "XYabcZ" $"{nameof clist} doesn't equal expected value"
+        }
+        test "applyYDelta ret 2, del 2" {
             let input = ResizeArray [
                 Y.Delta.Retain 2
                 Y.Delta.Delete 2
             ]
+
             let clist = clist("abXYcd")
-            let delta = Y.Text.Impl.toAdaptive clist.Count input
-            clist.Perform(delta)
+            Y.Text.Impl.applyYDelta input clist
 
             Expect.equal (System.String.Concat clist) "abcd" $"{nameof clist} doesn't equal expected value"
-
-            Expect.equal (IndexListDelta.toList delta) [
-                (Index.at 2, ElementOperation.Remove)
-                (Index.at 3, ElementOperation.Remove)
-            ] ""
         }
-        test "toAdaptive del 0" {
+        test "applyYDelta ret 2, del 2, then ret 3, insert 3" {
+            let input = ResizeArray [
+                Y.Delta.Retain 2
+                Y.Delta.Delete 2
+            ]
+
+            let list = clist("abXYcd")
+            Y.Text.Impl.applyYDelta input list
+
+            Expect.equal (System.String.Concat list) "abcd" $"{nameof list} doesn't equal expected value"
+
+            let input = ResizeArray [
+                Y.Delta.Retain 3
+                Y.Delta.Insert "123"
+            ]
+
+            Y.Text.Impl.applyYDelta input list
+
+            Expect.equal (System.String.Concat list) "abc123d" $"{nameof clist} doesn't equal expected value"
+        }
+        test "applyYDelta del 0" {
             let input = ResizeArray [
                 Y.Delta.Delete 0
             ]
+
             let clist = clist("abcd")
-            let delta = Y.Text.Impl.toAdaptive clist.Count input
-            clist.Perform(delta)
+            Y.Text.Impl.applyYDelta input clist
 
             Expect.equal (System.String.Concat clist) "abcd" $"{nameof clist} doesn't equal expected value"
-
-            Expect.equal (IndexListDelta.toList delta) [ ] ""
         }
     ]
 
-    testList "ofAdaptive" [
-        test "ofAdaptive ins 'abc'" {
+    testList "applyAdaptiveDelta" [
+        test "applyAdaptiveDelta ins 'abc'" {
             let input = [
                 0, ElementOperation.Set 'a'
                 1, ElementOperation.Set 'b'
                 2, ElementOperation.Set 'c'
             ]
             let list, delta = toIndexListDelta input
-            let delta = Y.Text.Impl.ofAdaptive list delta
 
             let ydoc = Y.Doc.Create ()
             let ytext = ydoc.getText "test"
-            ytext.applyDelta(delta)
+
+            Y.Text.Impl.applyAdaptiveDelta list delta ytext
 
             Expect.equal (ytext.toString()) "abc" "ytext doesn't equal expected value"
-
-            Expect.equal (List.ofSeq delta) [
-                Y.Delta.Insert "abc"
-            ] ""
         }
-        test "ofAdaptive ret 2, ins 'abc', ret 2, ins 'efg'" {
+        test "applyAdaptiveDelta ret 2, ins 'abc', ret 2, ins 'efg'" {
             let input = [
                 // 0
                 // 1
@@ -192,63 +193,47 @@ let tests = testList "Y.Delta" [
             ]
 
             let list, delta = toIndexListDelta input
-            let delta = Y.Text.Impl.ofAdaptive list delta
 
             let ydoc = Y.Doc.Create ()
             let ytext = ydoc.getText "test"
             let _ = ytext.insert(0, "0123456789")
-            ytext.applyDelta(delta)
+
+            Y.Text.Impl.applyAdaptiveDelta list delta ytext
 
             Expect.equal (ytext.toString()) "01abc23efg456789" "ytext doesn't equal expected value"
-
-            Expect.equal (List.ofSeq delta) [
-                Y.Delta.Retain 2
-                Y.Delta.Insert ("abc")
-                Y.Delta.Retain 2
-                Y.Delta.Insert ("efg")
-            ] ""
         }
-        test "ofAdaptive del 2" {
+        test "applyAdaptiveDelta del 2" {
             let input = [
                 0, ElementOperation.Remove
                 1, ElementOperation.Remove
             ]
             let list, delta = toIndexListDelta input
-            let delta = Y.Text.Impl.ofAdaptive list delta
 
             let ydoc = Y.Doc.Create ()
             let ytext = ydoc.getText "test"
             let _ = ytext.insert(0, "0123456789")
-            ytext.applyDelta(delta)
+
+            Y.Text.Impl.applyAdaptiveDelta list delta ytext
 
             Expect.equal (ytext.toString()) "23456789" "ytext doesn't equal expected value"
-
-            Expect.equal (List.ofSeq delta) [
-                Y.Delta.Delete 2
-            ] ""
         }
-        test "ofAdaptive ret 1, del 2" {
+        test "applyAdaptiveDelta ret 1, del 2" {
             let input = [
                 // 0
                 1, ElementOperation.Remove
                 2, ElementOperation.Remove
             ]
             let list, delta = toIndexListDelta input
-            let delta = Y.Text.Impl.ofAdaptive list delta
 
             let ydoc = Y.Doc.Create ()
             let ytext = ydoc.getText "test"
             let _ = ytext.insert(0, "0123456789")
-            ytext.applyDelta(delta)
+
+            Y.Text.Impl.applyAdaptiveDelta list delta ytext
 
             Expect.equal (ytext.toString()) "03456789" "ytext doesn't equal expected value"
-
-            Expect.equal (List.ofSeq delta) [
-                Y.Delta.Retain 1
-                Y.Delta.Delete 2
-            ] ""
         }
-        test "ofAdaptive ret 2, del 2" {
+        test "applyAdaptiveDelta ret 2, del 2" {
             let input = [
                 // 0
                 // 1
@@ -256,27 +241,28 @@ let tests = testList "Y.Delta" [
                 3, ElementOperation.Remove
             ]
             let list, delta = toIndexListDelta input
-            let delta = Y.Text.Impl.ofAdaptive list delta
 
             let ydoc = Y.Doc.Create ()
             let ytext = ydoc.getText "test"
             let _ = ytext.insert(0, "0123456789")
-            ytext.applyDelta(delta)
+
+            Y.Text.Impl.applyAdaptiveDelta list delta ytext
 
             Expect.equal (ytext.toString()) "01456789" "ytext doesn't equal expected value"
-
-            Expect.equal (List.ofSeq delta) [
-                Y.Delta.Retain 2
-                Y.Delta.Delete 2
-            ] ""
         }
-        test "ofAdaptive []" {
+        test "applyAdaptiveDelta []" {
             let input = []
             let list, delta = toIndexListDelta input
-            let delta = Y.Text.Impl.ofAdaptive list delta
-            Expect.equal (List.ofSeq delta) [] ""
+
+            let ydoc = Y.Doc.Create ()
+            let ytext = ydoc.getText "test"
+            let _ = ytext.insert(0, "abc")
+
+            Y.Text.Impl.applyAdaptiveDelta list delta ytext
+
+            Expect.equal (ytext.toString()) "abc" "ytext doesn't equal expected value"
         }
-        test "ofAdaptive ins 'abc', ret 2, del 2" {
+        test "applyAdaptiveDelta ins 'abc', ret 2, del 2" {
             let input = [
                 0, ElementOperation.Set 'a'
                 1, ElementOperation.Set 'b'
@@ -287,39 +273,28 @@ let tests = testList "Y.Delta" [
                 6, ElementOperation.Remove
             ]
             let list, delta = toIndexListDelta input
-            let delta = Y.Text.Impl.ofAdaptive list delta
 
             let ydoc = Y.Doc.Create ()
             let ytext = ydoc.getText "test"
             let _ = ytext.insert(0, "0123456789")
-            ytext.applyDelta(delta)
+
+            Y.Text.Impl.applyAdaptiveDelta list delta ytext
 
             Expect.equal (ytext.toString()) "abc01456789" "ytext doesn't equal expected value"
-
-            Expect.equal (List.ofSeq delta) [
-                Y.Delta.Insert ("abc")
-                Y.Delta.Retain 2
-                Y.Delta.Delete 2
-            ] ""
         }
-        test "ofAdaptive given \"abd\", insert 'c' between the 'b' and the 'd'" {
+        test "applyAdaptiveDelta given \"abd\", insert 'c' between the 'b' and the 'd'" {
             let input = [
                 2, ElementOperation.Set 'c'
             ]
             let list, delta = toIndexListDelta input
-            let delta = Y.Text.Impl.ofAdaptive list delta
 
             let ydoc = Y.Doc.Create ()
             let ytext = ydoc.getText "test"
             let _ = ytext.insert(0, "abd")
-            ytext.applyDelta(delta)
+
+            Y.Text.Impl.applyAdaptiveDelta list delta ytext
 
             Expect.equal (ytext.toString()) "abcd" "ytext doesn't equal expected value"
-
-            Expect.equal (List.ofSeq delta) [
-                Y.Delta.Retain   2
-                Y.Delta.Insert ("c")
-            ] ""
         }
     ]
  ]

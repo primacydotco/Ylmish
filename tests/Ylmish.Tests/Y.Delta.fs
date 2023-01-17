@@ -282,6 +282,47 @@ let tests = testList "Y.Delta" [
 
             Expect.equal (ytext.toString()) "abc01456789" "ytext doesn't equal expected value"
         }
+        test "applyAdaptiveDelta del 2, insert 'efg'" {
+            let input = [
+                0, ElementOperation.Remove
+                1, ElementOperation.Remove
+                2, ElementOperation.Set 'a'
+                3, ElementOperation.Set 'b'
+                4, ElementOperation.Set 'c'
+            ]
+            let list, delta = toIndexListDelta input
+
+            let ydoc = Y.Doc.Create ()
+            let ytext = ydoc.getText "test"
+            let _ = ytext.insert(0, "0123456789")
+
+            Y.Text.Impl.applyAdaptiveDelta list delta ytext
+
+            Expect.equal (ytext.toString()) "abc23456789" "ytext doesn't equal expected value"
+        }
+        test "applyAdaptiveDelta ins 'abc', ret 2, del 2, insert 'efg'" {
+            let input = [
+                0, ElementOperation.Set 'a'
+                1, ElementOperation.Set 'b'
+                2, ElementOperation.Set 'c'
+                // 3
+                // 4
+                5, ElementOperation.Remove
+                6, ElementOperation.Remove
+                7, ElementOperation.Set 'e'
+                8, ElementOperation.Set 'f'
+                9, ElementOperation.Set 'g'
+            ]
+            let list, delta = toIndexListDelta input
+
+            let ydoc = Y.Doc.Create ()
+            let ytext = ydoc.getText "test"
+            let _ = ytext.insert(0, "0123456789")
+
+            Y.Text.Impl.applyAdaptiveDelta list delta ytext
+
+            Expect.equal (ytext.toString()) "abc01efg456789" "ytext doesn't equal expected value"
+        }
         test "applyAdaptiveDelta given \"abd\", insert 'c' between the 'b' and the 'd'" {
             let input = [
                 2, ElementOperation.Set 'c'

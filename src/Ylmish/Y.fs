@@ -68,33 +68,88 @@ module Delta =
 
         loop 0 (List.ofSeq delta)
 
+    type Op<'a> =
+    | OpInsert of i: int * xs: 'a list
+    | OpRemove of i: int * length: int * IndexListDelta<'a>
+    | OpNone
+
     let inline applyAdaptiveDelta
         (insert : 'y      -> int -> 'b -> unit)
         (combine: 'a list -> 'b)
         (delete : 'y      -> int -> int -> unit)
         (list: IndexList<'a>) (delta: IndexListDelta<'a>) (y: 'y) : unit =
-        let applyDelta d updated =
-            IndexListDelta<'a>.Empty.Add(d)
-            |> IndexList.applyDelta updated
+        let applyDeltas list ds =
+            ds
+            |> IndexList.applyDelta list
             |> fst
 
-        let rec loop current xs =
+        let applyDelta list d =
+            IndexListDelta<'a>.Empty.Add(d)
+            |> applyDeltas list
+
+        let getPosition index list =
+            IndexList.tryGetPosition index list
+            |> Option.get
+
+        let rec loop current acc xs =
             match xs with
-            | [] -> ()
+            | [] ->
+                match acc with
+                | OpInsert (i, xs)   -> insert y i (combine (List.rev xs))
+                | OpRemove (i, n, _) -> delete y i n
+                | OpNone             -> ()
+
             | ((index, op) as d)::xs ->
                 match op with
                 | ElementOperation.Set c ->
-                    let updated = applyDelta d current
-                    let n = IndexList.tryGetPosition index updated
-                    insert y n.Value (combine [| c |]) // PERFORMANCE: accumulate multiple values for yValue and insert them in a single operation
-                    loop updated xs
+                    // Apply any pending removes, and inserts which are not
+                    // contiguous with the current one
+                    let updated, n, existing =
+                        match acc with
+                        | OpInsert (i, xs) ->
+                            let updated = applyDelta current d
+                            let n = getPosition index updated
+
+                            let existing =
+                                if i + xs.Length <> n - 1 then
+                                    insert y i (combine (List.rev xs))
+                                    []
+                                else
+                                    xs
+
+                            updated, n, existing
+
+                        | OpRemove (i, n, ds) ->
+                            delete y i n
+                            let updated = applyDeltas current (ds.Add(d))
+                            updated, i, []
+
+                        | OpNone ->
+                            let updated = applyDelta current d
+                            let n = getPosition index updated
+
+                            updated, n, []
+
+                    loop updated (OpInsert (n, c::existing)) xs
 
                 | ElementOperation.Remove ->
-                    let n = IndexList.tryGetPosition index current
-                    delete y n.Value 1 // PERFORMANCE: accumulate count of items to remove and remove them with a single operation
-                    loop (applyDelta d current) xs
+                    match acc with
+                    | OpInsert (i, xs)   -> insert y i (combine (List.rev xs))
+                    | OpRemove (_, _, _) -> ()
+                    | OpNone             -> ()
 
-        loop list (List.ofSeq delta)
+                    let acc =
+                        match acc with
+                        | OpRemove (i, n, ds) ->
+                            OpRemove (i, n + 1, ds.Add(d))
+
+                        | _ ->
+                            let n = IndexList.tryGetPosition index current
+                            OpRemove (n.Value, 1, IndexListDelta.Empty.Add(d))
+
+                    loop current acc xs
+
+        loop list OpNone (List.ofSeq delta)
 
 [<RequireQualifiedAccess>]
 module Text =
@@ -109,7 +164,7 @@ module Text =
         let applyAdaptiveDelta (list: IndexList<_>) (delta: IndexListDelta<char>) (y: Y.Text) : unit =
             Delta.applyAdaptiveDelta
                 (fun (y: Y.Text) n s -> y.insert(n, s))
-                (fun (cs: char[])    -> String(cs))
+                (fun (cs: char list) -> String(Array.ofList cs))
                 (fun  y i length     -> y.delete(i, length))
                 list delta y
 
@@ -207,7 +262,7 @@ module Array =
         let applyAdaptiveDelta (list: IndexList<A.Element option>) (delta: IndexListDelta<A.Element option>) (y: Y.Array<Y.Element option>) : unit =
             Delta.applyAdaptiveDelta
                 (fun (y: Y.Array<_>) n s -> y.insert(n, s))
-                (fun (xs: _[])           -> xs |> Array.map (Option.map Element.ofAdaptive))
+                (fun (xs: _ list)        -> xs |> List.map (Option.map Element.ofAdaptive) |> Array.ofList)
                 (fun  y i length         -> y.delete(i, length))
                 list delta y
 

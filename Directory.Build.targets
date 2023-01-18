@@ -23,19 +23,24 @@
         BeforeTargets="CoreCompile"
         Condition="'$(Adaptifying)' != 'true'"
         >
-        <!-- When NOT running under NCRUNCH -->
-        <Exec
-            Condition="'$(NCRUNCH)' != '1'"
-            Command="dotnet adaptify --local --addtoproject $(MSBuildProjectFullPath)"
-            EnvironmentVariables="Adaptifying=true"
-        />
+        <PropertyGroup>
+            <!-- When NOT running under NCrunch, use the normal project file path -->
+            <ProjectFileFullPath Condition="'$(NCRUNCH)' != '1'">$(MSBuildProjectFullPath)</ProjectFileFullPath>
 
-        <!-- When running under NCRUNCH -->
+            <!--
+                When running under NCrunch, use the path of the project in its original location rather
+                than at the location to which NCrunch copies it, because:
+                1. that means that the version available to Visual Studio will be updated automatically
+                2. NCrunch will copy the updated version across, so it will still have access to the updated version
+            -->
+            <ProjectFileFullPath Condition="'$(NCRUNCH)' == '1'">$(NCrunchOriginalProjectPath)</ProjectFileFullPath>
+        </PropertyGroup>
+
         <Exec
-            Condition="'$(NCRUNCH)' == '1'"
-            Command="dotnet adaptify --local --addtoproject $(NCrunchOriginalProjectPath)"
+            Command="dotnet adaptify --local --addtoproject $(ProjectFileFullPath)"
             EnvironmentVariables="Adaptifying=true"
-            WorkingDirectory="$(NCrunchOriginalSolutionDir)"
+            LogStandardErrorAsError="true"
+            CustomErrorRegularExpression="(ERRORS|FAILED)"
         />
     </Target>
 </Project>

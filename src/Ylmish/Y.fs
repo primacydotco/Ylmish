@@ -38,11 +38,11 @@ module Y =
 
 [<RequireQualifiedAccess>]
 module Delta =
-    let inline applyYDelta
-        (getItem  : ^a -> int -> ^b)
+    let applyYDelta
+        (getItem  : 'a -> int -> 'b)
         (getLength: 'a -> int)
-        (delta: ResizeArray<Y.Delta<^a>>) (list: clist<^b>) : unit =
-        let rec loop i (delta: Y.Delta<^a> list) =
+        (delta: ResizeArray<Y.Delta<'a>>) (list: clist<'b>) : unit =
+        let rec loop i (delta: Y.Delta<'a> list) =
             match delta with
             | [] -> ()
             | d::xs ->
@@ -68,12 +68,12 @@ module Delta =
 
         loop 0 (List.ofSeq delta)
 
-    type Op<'a> =
+    type private Op<'a> =
     | OpInsert of i: int * xs: 'a list
     | OpRemove of i: int * length: int * IndexListDelta<'a>
     | OpNone
 
-    let inline applyAdaptiveDelta
+    let applyAdaptiveDelta
         (insert : 'y      -> int -> 'b -> unit)
         (combine: 'a list -> 'b)
         (delete : 'y      -> int -> int -> unit)

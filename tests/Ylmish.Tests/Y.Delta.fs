@@ -3,7 +3,6 @@ module Ylmish.Y.Delta
 open FSharp.Data.Adaptive
 open Yjs
 
-open Ylmish.Adaptive
 open Ylmish
 
 #if FABLE_COMPILER
@@ -11,22 +10,6 @@ open Fable.Mocha
 #else
 open Expecto
 #endif
-
-open Fable.Core.JS // console.log
-open System
-
-let private getFirstNIndicesUsingIndexAt n =
-    [ for i in 0..n - 1 do Index.at i ]
-
-let private getFirstNIndicesUsingInit n =
-    let chars = Array.init n (fun i -> char ((int 'A') + i))
-    let list = clist(chars)
-
-    [ for i in 0..n - 1 do list.TryGetIndex(i).Value ]
-
-let private getFirstNIndicesUsingInsertAt n =
-    let list = clist()
-    [ for i in 0..n - 1 do list.InsertAt(i, char ((int 'A') + i)) ]
 
 /// Convenience function to convert (index: int, op) pairs into an IndexList of placeholders and
 /// an IndexListDelta<char>.
@@ -59,22 +42,6 @@ let private toIndexListDelta list =
 // Test cases from https://docs.yjs.dev/api/delta-format
 // https://quilljs.com/docs/delta/#playground
 let tests = testList "Y.Delta" [
-    testList "Index.at" [
-        test "Index.at and clist initialisation return the same indices" {
-            let n = 5
-            let indexAt = getFirstNIndicesUsingIndexAt n
-            let init = getFirstNIndicesUsingInit n
-            Expect.equal indexAt init "Index.at returned different indices to clist initialisation"
-        }
-
-        test "Index.at and clist.InsertAt return the same indices" {
-            let n = 5
-            let indexAt = getFirstNIndicesUsingIndexAt n
-            let insertAt = getFirstNIndicesUsingInsertAt n
-            Expect.equal indexAt insertAt "Index.at returned different indices to clist.InsertAt"
-        }
-    ]
-
     testList "applyYDelta" [
         test "applyYDelta given empty clist, ins \"abc\" should give \"abc\"" {
             let input = ResizeArray [

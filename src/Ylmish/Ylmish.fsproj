@@ -9,7 +9,6 @@
 	<ItemGroup>
 		<Compile Include="Disposables.fs" />
 		<Compile Include="Adaptive.Codec.fs" />
-		<Compile Include="Adaptive.Index.fs" />
 		<Compile Include="Y.fs" />
 		<Compile Include="Program.fs" />
 	</ItemGroup>
